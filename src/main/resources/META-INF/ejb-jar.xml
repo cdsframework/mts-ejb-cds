@@ -11,6 +11,11 @@
 
             <!-- opencds service -->
             <env-entry>
+                <env-entry-name>DEFAULT_CDM</env-entry-name>
+                <env-entry-type>java.lang.String</env-entry-type>
+                <env-entry-value>C36</env-entry-value>
+            </env-entry>
+            <env-entry>
                 <env-entry-name>CDS_ENDPOINT</env-entry-name>
                 <env-entry-type>java.lang.String</env-entry-type>
                 <env-entry-value>https://cds.hln.com/opencds-decision-support-service/evaluate</env-entry-value>

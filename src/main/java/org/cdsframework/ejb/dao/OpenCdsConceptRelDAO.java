@@ -52,7 +52,7 @@ public class OpenCdsConceptRelDAO extends BaseDAO<OpenCdsConceptRelDTO> {
 
             @Override
             protected String getQueryDML(BaseDTO baseDTO, SessionDTO sessionDTO, PropertyBagDTO propertyBagDTO) {
-                return "select * from opencds_concept_rel where concept_code_id = :concept_code_id";
+                return "select * from vw_opencds_concept_rel where concept_code_id = :concept_code_id";
             }
         }, false);
 
@@ -60,7 +60,7 @@ public class OpenCdsConceptRelDAO extends BaseDAO<OpenCdsConceptRelDTO> {
 
             @Override
             protected String getQueryDML(BaseDTO baseDTO, SessionDTO sessionDTO, PropertyBagDTO propertyBagDTO) {
-                return "select * from opencds_concept_rel where cds_code_id = :cds_code_id";
+                return "select * from vw_opencds_concept_rel where cds_code_id = :cds_code_id";
             }
         }, false);
 
@@ -68,7 +68,7 @@ public class OpenCdsConceptRelDAO extends BaseDAO<OpenCdsConceptRelDTO> {
 
             @Override
             protected String getQueryDML(BaseDTO baseDTO, SessionDTO sessionDTO, PropertyBagDTO propertyBagDTO) {
-                return "select * from opencds_concept_rel where concept_code_id = :concept_code_id and cds_code_id = :cds_code_id and determination_method = :determination_method";
+                return "select * from vw_opencds_concept_rel where concept_code_id = :concept_code_id and cds_code_id = :cds_code_id and determination_method = :determination_method";
             }
         }, false);
 
