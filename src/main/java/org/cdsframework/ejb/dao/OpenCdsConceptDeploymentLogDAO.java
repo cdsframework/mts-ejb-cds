@@ -27,57 +27,32 @@
  */
 package org.cdsframework.ejb.dao;
 
-import javax.ejb.LocalBean;
 import javax.ejb.Stateless;
 import org.cdsframework.base.BaseDAO;
 import org.cdsframework.base.BaseDTO;
 import org.cdsframework.callback.QueryCallback;
-import org.cdsframework.dto.OpenCdsConceptRelDTO;
+import org.cdsframework.dto.OpenCdsConceptDeploymentLogDTO;
 import org.cdsframework.dto.PropertyBagDTO;
 import org.cdsframework.dto.SessionDTO;
 import org.cdsframework.exceptions.MtsException;
 
 /**
  *
- * @author HLN Consulting, LLC
+ * @author sdn
  */
 @Stateless
-@LocalBean
-public class OpenCdsConceptRelDAO extends BaseDAO<OpenCdsConceptRelDTO> {
+public class OpenCdsConceptDeploymentLogDAO extends BaseDAO<OpenCdsConceptDeploymentLogDTO> {
 
     @Override
     protected void initialize() throws MtsException {
 
-        this.registerDML(OpenCdsConceptRelDTO.ByOpenCdsConceptId.class, new QueryCallback(getDtoTableName()) {
+        this.registerDML(OpenCdsConceptDeploymentLogDTO.ByCodeId.class, new QueryCallback(getDtoTableName()) {
 
             @Override
             protected String getQueryDML(BaseDTO baseDTO, SessionDTO sessionDTO, PropertyBagDTO propertyBagDTO) {
-                return "select * from vw_opencds_concept_rel where concept_code_id = :concept_code_id";
+                return "select * from opencds_concept_deployment_log where code_id = :code_id and relationship_id is null";
             }
         }, false);
 
-        this.registerDML(OpenCdsConceptRelDTO.ByCodeId.class, new QueryCallback(getDtoTableName()) {
-
-            @Override
-            protected String getQueryDML(BaseDTO baseDTO, SessionDTO sessionDTO, PropertyBagDTO propertyBagDTO) {
-                return "select * from vw_opencds_concept_rel where cds_code_id = :cds_code_id";
-            }
-        }, false);
-
-        this.registerDML(OpenCdsConceptRelDTO.ByOpenCdsConceptIdCodeIdConceptDeterminationMethodId.class, new QueryCallback(getDtoTableName()) {
-
-            @Override
-            protected String getQueryDML(BaseDTO baseDTO, SessionDTO sessionDTO, PropertyBagDTO propertyBagDTO) {
-                return "select * from vw_opencds_concept_rel where concept_code_id = :concept_code_id and cds_code_id = :cds_code_id and determination_method = :determination_method";
-            }
-        }, false);
-
-        this.registerDML(OpenCdsConceptRelDTO.CountByConceptCodeIdCodeSystemId.class, new QueryCallback(getDtoTableName()) {
-
-            @Override
-            protected String getQueryDML(BaseDTO baseDTO, SessionDTO sessionDTO, PropertyBagDTO propertyBagDTO) {
-                return "select count(*) from opencds_concept_rel ocr, cds_code cc where ocr.cds_code_id = cc.code_id and cc.code_system_id = :code_system_id and ocr.concept_code_id = :concept_code_id";
-            }
-        }, false);
     }
 }

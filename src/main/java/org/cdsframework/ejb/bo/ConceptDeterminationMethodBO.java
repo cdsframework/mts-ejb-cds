@@ -29,7 +29,8 @@ package org.cdsframework.ejb.bo;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
-import java.util.ArrayList;
+import java.io.UnsupportedEncodingException;
+import java.net.URISyntaxException;
 import java.util.HashMap;
 import java.util.Map;
 import javax.ejb.EJB;
@@ -42,14 +43,14 @@ import org.cdsframework.dto.ConceptDeterminationMethodDTO;
 import org.cdsframework.dto.PropertyBagDTO;
 import org.cdsframework.dto.SessionDTO;
 import org.cdsframework.ejb.local.CdsMGRLocal;
-import org.cdsframework.ejb.local.PropertyMGRLocal;
-import org.cdsframework.enumeration.CoreErrorCode;
+import org.cdsframework.enumeration.DeploymentEnvironment;
 import org.cdsframework.exceptions.AuthenticationException;
 import org.cdsframework.exceptions.AuthorizationException;
+import org.cdsframework.exceptions.ConstraintViolationException;
 import org.cdsframework.exceptions.MtsException;
 import org.cdsframework.exceptions.NotFoundException;
 import org.cdsframework.exceptions.ValidationException;
-import org.cdsframework.util.AuthenticationUtils;
+import org.cdsframework.rckms.data.upload.service.uploader.OpenCDSConfigUploader;
 import org.opencds.config.schema.ConceptDeterminationMethod;
 import org.opencds.config.schema.ConceptDeterminationMethods;
 import org.opencds.config.schema.ObjectFactory;
@@ -62,52 +63,43 @@ import org.opencds.config.schema.ObjectFactory;
 public class ConceptDeterminationMethodBO extends BaseBO<ConceptDeterminationMethodDTO> {
 
     @EJB
-    private PropertyMGRLocal propertyMGRLocal;
-    @EJB
     private CdsMGRLocal cdsMGRLocal;
-
-    /**
-     * Get the default concept determination method configured.
-     *
-     * @return the default concept determination
-     * @throws ValidationException
-     * @throws MtsException
-     * @throws NotFoundException
-     */
-    public ConceptDeterminationMethodDTO getDefaultConceptDeterminationMethod() throws ValidationException, MtsException,
-            NotFoundException {
-        final String METHODNAME = "getDefaultConceptDeterminationMethod ";
-        ConceptDeterminationMethodDTO result = null;
-        String defaultPrimaryKey = propertyMGRLocal.get("CDS_DEFAULT_CONCEPT_DETERMINATION_METHOD", String.class);
-        if (defaultPrimaryKey == null) {
-            throw new ValidationException(CoreErrorCode.ParameterCanNotBeNull, "CDS_DEFAULT_CONCEPT_DETERMINATION_METHOD property not set!");
-        }
-        ConceptDeterminationMethodDTO query = new ConceptDeterminationMethodDTO();
-        query.setCodeId(defaultPrimaryKey);
-        try {
-            result = findByPrimaryKeyMain(query, new ArrayList<Class>(), AuthenticationUtils.getInternalSessionDTO(), new PropertyBagDTO());
-        } catch (AuthorizationException e) {
-            logger.error(METHODNAME, e);
-        } catch (AuthenticationException e) {
-            logger.error(METHODNAME, e);
-        }
-        return result;
-    }
 
     @Override
     public Map<String, byte[]> exportData(ConceptDeterminationMethodDTO baseDTO, Class queryClass, SessionDTO sessionDTO, PropertyBagDTO propertyBagDTO)
             throws ValidationException, NotFoundException, MtsException, AuthenticationException, AuthorizationException {
         final String METHODNAME = "exportData ";
 
-        Map<String, byte[]> fileMap = new HashMap<String, byte[]>();
+        Map<String, byte[]> fileMap = new HashMap<>();
 
         if (ConceptDeterminationMethodDTO.OpenCdsExport.class == queryClass) {
             logger.info(METHODNAME, "OpenCDS export of Concept Determination Method: ", baseDTO.getCode());
 
             String codeSystem = (String) baseDTO.getQueryMap().get("codeSystem");
-
             logger.info(METHODNAME, "codeSystem: ", codeSystem);
-            ConceptDeterminationMethod conceptDeterminationMethod = cdsMGRLocal.getConceptDeterminationMethod(baseDTO, codeSystem, sessionDTO, propertyBagDTO);
+
+            DeploymentEnvironment environment = (DeploymentEnvironment) baseDTO.getQueryMap().get("environment");
+            if (environment == null) {
+                environment = DeploymentEnvironment.PRODUCTION;
+            }
+            logger.info(METHODNAME, "codeSystem: ", codeSystem);
+
+            Boolean deploy = propertyBagDTO.get("deploy", Boolean.class);
+            logger.info(METHODNAME, "deploy: ", deploy);
+
+            OpenCDSConfigUploader openCDSConfigUploader = propertyBagDTO.get("openCDSConfigUploader", OpenCDSConfigUploader.class);
+            logger.info(METHODNAME, "openCDSConfigUploader: ", openCDSConfigUploader);
+
+            String cdmId = propertyBagDTO.get("cdmId", String.class);
+            logger.info(METHODNAME, "cdmId: ", cdmId);
+
+            ConceptDeterminationMethod conceptDeterminationMethod;
+            try {
+                conceptDeterminationMethod = cdsMGRLocal.getConceptDeterminationMethod(baseDTO, codeSystem, environment, deploy, sessionDTO, propertyBagDTO);
+            } catch (ConstraintViolationException e) {
+                logger.error(e);
+                throw new MtsException(e.getMessage());
+            }
 
             ObjectFactory objectFactory = new ObjectFactory();
 
@@ -126,6 +118,10 @@ public class ConceptDeterminationMethodBO extends BaseBO<ConceptDeterminationMet
                 output = output.replaceAll("[^\\x20-\\x7e]", "");
                 fileMap.put("cdm.xml", output.getBytes("UTF-8"));
                 outputStream.close();
+
+                if (deploy) {
+                    deployCdm(openCDSConfigUploader, cdmId, fileMap.get("cdm.xml"));
+                }
             } catch (JAXBException e) {
                 throw new MtsException(e.getMessage(), e);
             } catch (IOException e) {
@@ -134,6 +130,47 @@ public class ConceptDeterminationMethodBO extends BaseBO<ConceptDeterminationMet
         }
 
         return fileMap;
+    }
+
+    private org.cdsframework.rckms.data.upload.service.uploader.Response deployCdm(OpenCDSConfigUploader openCDSConfigUploader, String cdmId, byte[] input)
+            throws MtsException {
+        final String METHODNAME = "deployCdm ";
+
+        if (openCDSConfigUploader == null) {
+            throw new MtsException("openCDSConfigUploader is null!");
+        }
+
+        if (cdmId == null) {
+            throw new MtsException("cdmId is null!");
+        }
+
+        if (input == null) {
+            throw new MtsException("input is null!");
+        }
+
+        try {
+            openCDSConfigUploader.deleteCdm(cdmId);
+        } catch (URISyntaxException e) {
+            logger.error(METHODNAME, e.getMessage());
+        }
+
+        org.cdsframework.rckms.data.upload.service.uploader.Response result;
+        try {
+            result = openCDSConfigUploader.addCdm(new String(input));
+        } catch (URISyntaxException | UnsupportedEncodingException e) {
+            logger.error(e);
+            throw new MtsException("Error deploying CDM file: " + e.getMessage());
+        }
+        logger.info(METHODNAME, "cdmId=", cdmId);
+        logger.info(METHODNAME, "responseType=", result.getResponseType());
+        logger.info(METHODNAME, "code=", result.getCode());
+        logger.info(METHODNAME, "description=", result.getDescription());
+        logger.info(METHODNAME, "type=", result.getType());
+
+        if (204 != result.getCode()) {
+            throw new MtsException("Error deploying CDM file: " + result.getCode());
+        }
+        return result;
     }
 
 }

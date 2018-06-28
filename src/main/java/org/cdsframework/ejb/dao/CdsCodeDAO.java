@@ -331,7 +331,7 @@ public class CdsCodeDAO extends BaseDAO<CdsCodeDTO> {
                 if (baseDTO != null) {
                     Map<String, Object> filterMap = (Map) baseDTO.getQueryMap().get(CoreConstants.FILTERS);
                     String codeSystemId;
-                    logger.debug("getCallbackNamedParameters filterMap: ", filterMap);
+                    logger.debug("CdsCodeDTO.ByCodeSystemId getCallbackNamedParameters filterMap: ", filterMap);
 
                     if (baseDTO instanceof CdsCodeDTO) {
                         CdsCodeDTO cdsCodeDTO = (CdsCodeDTO) baseDTO;
@@ -342,6 +342,10 @@ public class CdsCodeDAO extends BaseDAO<CdsCodeDTO> {
                     } else {
                         throw new MtsException("Unexpected DTO type: " + baseDTO.getClass().getCanonicalName());
                     }
+                    if (codeSystemId == null) {
+                        codeSystemId = (String) baseDTO.getQueryMap().get("codeSystemId");
+                    }
+                    logger.debug("CdsCodeDTO.ByCodeSystemId getCallbackNamedParameters codeSystemId: ", codeSystemId);
                     if (filterMap != null) {
                         setLowerQueryMapValue(baseDTO, "display_name", "displayName", namedParameters);
                         setLowerQueryMapValue(baseDTO, "code", "code", namedParameters);
