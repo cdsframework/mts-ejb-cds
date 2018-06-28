@@ -3,7 +3,7 @@
     <modelVersion>4.0.0</modelVersion>
     <groupId>org.cdsframework</groupId>
     <artifactId>mts-ejb-cds</artifactId>
-    <version>1.0.0</version>
+    <version>1.0.0-SNAPSHOT</version>
     <packaging>ejb</packaging>
     <name>mts-ejb-cds</name>
 
@@ -16,12 +16,12 @@
         <dependency>
             <groupId>org.cdsframework</groupId>
             <artifactId>mts-support-cds</artifactId>
-            <version>1.0.0</version>
+            <version>1.0.0-SNAPSHOT</version>
         </dependency>
         <dependency>
             <groupId>org.cdsframework</groupId>
             <artifactId>mts-ejb-core</artifactId>
-            <version>1.0.0</version>
+            <version>1.0.0-SNAPSHOT</version>
         </dependency>
         <dependency>
             <groupId>org.cdsframework</groupId>
@@ -45,11 +45,6 @@
             <version>19.0</version>
         </dependency>
         <dependency>
-            <groupId>opencds-rckms</groupId>
-            <artifactId>opencds-artifact-deployment</artifactId>
-            <version>1.0.0-SNAPSHOT</version>
-        </dependency>
-        <dependency>
             <groupId>javax</groupId>
             <artifactId>javaee-api</artifactId>
             <version>7.0</version>
@@ -71,8 +66,8 @@
                 <artifactId>maven-compiler-plugin</artifactId>
                 <version>3.1</version>
                 <configuration>
-                    <source>1.8</source>
-                    <target>1.8</target>
+                    <source>1.6</source>
+                    <target>1.6</target>
                 </configuration>
             </plugin>
             <plugin>

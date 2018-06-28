@@ -51,7 +51,6 @@ import org.cdsframework.dto.CdsCodeDTO;
 import org.cdsframework.dto.CdsCodeSystemDTO;
 import org.cdsframework.dto.ConceptDeterminationMethodDTO;
 import org.cdsframework.dto.OpenCdsConceptDTO;
-import org.cdsframework.dto.OpenCdsConceptDeploymentLogDTO;
 import org.cdsframework.dto.OpenCdsConceptRelDTO;
 import org.cdsframework.dto.PropertyBagDTO;
 import org.cdsframework.dto.SessionDTO;
@@ -60,19 +59,13 @@ import org.cdsframework.dto.ValueSetDTO;
 import org.cdsframework.dto.ValueSetSubValueSetRelDTO;
 import org.cdsframework.ejb.bo.CdsCodeSystemBO;
 import org.cdsframework.ejb.bo.OpenCdsConceptBO;
-import org.cdsframework.ejb.bo.OpenCdsConceptDeploymentLogBO;
 import org.cdsframework.ejb.bo.ValueSetBO;
-import org.cdsframework.enumeration.DeploymentAction;
-import org.cdsframework.enumeration.DeploymentEnvironment;
 import org.cdsframework.exceptions.AuthenticationException;
 import org.cdsframework.exceptions.AuthorizationException;
 import org.cdsframework.exceptions.MtsException;
 import org.cdsframework.exceptions.CdsException;
-import org.cdsframework.exceptions.ConstraintViolationException;
 import org.cdsframework.exceptions.NotFoundException;
 import org.cdsframework.exceptions.ValidationException;
-import org.cdsframework.group.Add;
-import org.cdsframework.util.AuthenticationUtils;
 import org.cdsframework.util.LogUtils;
 import org.opencds.config.schema.Concept;
 import org.opencds.config.schema.ConceptDeterminationMethod;
@@ -103,8 +96,6 @@ public class CdsMGRLocal {
     private ValueSetBO valueSetBO;
     @EJB
     private CdsCodeSystemBO cdsCodeSystemBO;
-    @EJB
-    private OpenCdsConceptDeploymentLogBO openCdsConceptDeploymentLogBO;
 
     /**
      * Retrieve a handle to the OpenCDS wen service using the system properties
@@ -247,15 +238,8 @@ public class CdsMGRLocal {
         return getOpenCdsService().evaluate(payload, scopingEntityId, businessId, version, executionDate);
     }
 
-    @TransactionAttribute(TransactionAttributeType.REQUIRES_NEW)
-    public ConceptDeterminationMethod getConceptDeterminationMethod(
-            ConceptDeterminationMethodDTO conceptDeterminationMethodDTO,
-            String codeSystem,
-            DeploymentEnvironment environment,
-            boolean audit,
-            SessionDTO sessionDTO,
-            PropertyBagDTO propertyBagDTO)
-            throws MtsException, ValidationException, NotFoundException, AuthenticationException, AuthorizationException, ConstraintViolationException {
+    public ConceptDeterminationMethod getConceptDeterminationMethod(ConceptDeterminationMethodDTO conceptDeterminationMethodDTO, String codeSystem, SessionDTO sessionDTO, PropertyBagDTO propertyBagDTO)
+            throws MtsException, ValidationException, NotFoundException, AuthenticationException, AuthorizationException {
         ObjectFactory objectFactory = new ObjectFactory();
         ConceptDeterminationMethod result = objectFactory.createConceptDeterminationMethod();
 
@@ -274,7 +258,7 @@ public class CdsMGRLocal {
         result.setUserId("GENERATED");
         result.setVersion("1.0");
 
-        addConceptMappings(conceptDeterminationMethodDTO, result, codeSystem, environment, audit, objectFactory, sessionDTO, propertyBagDTO);
+        addConceptMappings(conceptDeterminationMethodDTO, result, codeSystem, objectFactory, sessionDTO, propertyBagDTO);
 
         return result;
     }
@@ -283,18 +267,16 @@ public class CdsMGRLocal {
             ConceptDeterminationMethodDTO conceptDeterminationMethodDTO,
             ConceptDeterminationMethod conceptDeterminationMethod,
             String codeSystem,
-            DeploymentEnvironment environment,
-            boolean audit,
             ObjectFactory objectFactory,
             SessionDTO sessionDTO,
             PropertyBagDTO propertyBagDTO)
-            throws ValidationException, NotFoundException, MtsException, AuthenticationException, AuthorizationException, ConstraintViolationException {
+            throws ValidationException, NotFoundException, MtsException, AuthenticationException, AuthorizationException {
 
         final String METHODNAME = "addConceptMappings ";
-        Map<String, ConceptMapping> addedConceptMappings = new HashMap<>();
-        Map<String, Map<String, ConceptMapping.FromConcepts>> addedMappedCodeSystems = new HashMap<>();
-        Map<ConceptMapping.FromConcepts, List<String>> addedMappedCodeSystemCodes;
-        List<Class> childClasses = new ArrayList<>();
+        Map<String, ConceptMapping> addedConceptMappings = new HashMap<String, ConceptMapping>();
+        Map<String, Map<String, ConceptMapping.FromConcepts>> addedMappedCodeSystems = new HashMap<String, Map<String, ConceptMapping.FromConcepts>>();
+        Map<ConceptMapping.FromConcepts, List<String>> addedMappedCodeSystemCodes = new HashMap<ConceptMapping.FromConcepts, List<String>>();
+        List<Class> childClasses = new ArrayList<Class>();
         childClasses.add(OpenCdsConceptRelDTO.class);
         childClasses.add(ValueSetSubValueSetRelDTO.class);
         childClasses.add(ValueSetCdsCodeRelDTO.class);
@@ -304,46 +286,9 @@ public class CdsMGRLocal {
         List<OpenCdsConceptDTO> openCdsConceptDTOs = openCdsConceptBO.findByQueryListMain(openCdsConceptQueryDTO, OpenCdsConceptDTO.ByConceptDeterminationMethod.class, childClasses, sessionDTO, propertyBagDTO);
 
         for (OpenCdsConceptDTO openCdsConceptDTO : openCdsConceptDTOs) {
-            if (audit) {
-                OpenCdsConceptDeploymentLogDTO logDTO = new OpenCdsConceptDeploymentLogDTO();
-                logDTO.setCodeId(openCdsConceptDTO.getCodeId());
-                logDTO.setDeploymentAction(DeploymentAction.DEPLOYED);
-                logDTO.setDeploymentEnvironment(environment);
-                openCdsConceptDeploymentLogBO.addMain(logDTO, Add.class, AuthenticationUtils.getInternalSessionDTO(), propertyBagDTO);
-            }
-            addedMappedCodeSystemCodes = new HashMap<>();
-            boolean testPresent = false;
-            List<OpenCdsConceptRelDTO> openCdsConceptRelDTOs = openCdsConceptDTO.getOpenCdsConceptRelDTOs();
-            if (environment == DeploymentEnvironment.TEST) {
-                for (OpenCdsConceptRelDTO openCdsConceptRelDTO : openCdsConceptRelDTOs) {
-                    if (openCdsConceptRelDTO.getDeploymentEnvironment() == DeploymentEnvironment.TEST) {
-                        testPresent = true;
-                        break;
-                    }
-                }
-            }
-            for (OpenCdsConceptRelDTO openCdsConceptRelDTO : openCdsConceptRelDTOs) {
-                if (openCdsConceptRelDTO.isDisabled()) {
-                    logger.warn(METHODNAME, "skipping production relationshipId ", openCdsConceptRelDTO.getRelationshipId(), " - it is disabled.");
-                    continue;
-                }
-                if (testPresent && openCdsConceptRelDTO.getDeploymentEnvironment() == DeploymentEnvironment.PRODUCTION) {
-                    logger.warn(METHODNAME, "skipping production relationshipId ", openCdsConceptRelDTO.getRelationshipId(), " - there is a test version of it.");
-                    continue;
-                }
-                if (environment == DeploymentEnvironment.PRODUCTION && openCdsConceptRelDTO.getDeploymentEnvironment() == DeploymentEnvironment.TEST) {
-                    logger.warn(METHODNAME, "skipping test relationshipId ", openCdsConceptRelDTO.getRelationshipId(), " - this is a production run cdm.");
-                    continue;
-                }
+            addedMappedCodeSystemCodes = new HashMap<ConceptMapping.FromConcepts, List<String>>();
+            for (OpenCdsConceptRelDTO openCdsConceptRelDTO : openCdsConceptDTO.getOpenCdsConceptRelDTOs()) {
                 if (null != openCdsConceptRelDTO.getMappingType()) {
-                    if (audit) {
-                        OpenCdsConceptDeploymentLogDTO logRelDTO = new OpenCdsConceptDeploymentLogDTO();
-                        logRelDTO.setCodeId(openCdsConceptDTO.getCodeId());
-                        logRelDTO.setRelationshipId(openCdsConceptRelDTO.getRelationshipId());
-                        logRelDTO.setDeploymentAction(DeploymentAction.DEPLOYED);
-                        logRelDTO.setDeploymentEnvironment(environment);
-                        openCdsConceptDeploymentLogBO.addMain(logRelDTO, Add.class, AuthenticationUtils.getInternalSessionDTO(), propertyBagDTO);
-                    }
                     switch (openCdsConceptRelDTO.getMappingType()) {
                         case CODE:
                             // send it up as is
@@ -359,61 +304,47 @@ public class CdsMGRLocal {
                             break;
                         case VALUE_SET: {
                             ValueSetDTO valueSetDTO = openCdsConceptRelDTO.getValueSetDTO();
-                            if (valueSetDTO != null) {
-                                for (ValueSetCdsCodeRelDTO valueSetCdsCodeRelDTO : valueSetDTO.getAllValueSetCdsCodeRelDTOs()) {
-                                    // create temporary OpenCdsConceptRelDTOs for each value set mapping
-                                    CdsCodeDTO cdsCodeDTO = valueSetCdsCodeRelDTO.getCdsCodeDTO();
-                                    OpenCdsConceptRelDTO tempOpenCdsConceptRelDTO = new OpenCdsConceptRelDTO();
-                                    CdsCodeSystemDTO tempCdsCodeSystemDTO = new CdsCodeSystemDTO();
-                                    tempCdsCodeSystemDTO.setOid(cdsCodeDTO.getCodeSystem());
-                                    tempCdsCodeSystemDTO.setName(cdsCodeDTO.getCodeSystemName());
-                                    tempOpenCdsConceptRelDTO.setCdsCodeSystemDTO(tempCdsCodeSystemDTO);
-                                    tempOpenCdsConceptRelDTO.setCdsCodeDTO(cdsCodeDTO);
+                            for (ValueSetCdsCodeRelDTO valueSetCdsCodeRelDTO : valueSetDTO.getAllValueSetCdsCodeRelDTOs()) {
+                                // create temporary OpenCdsConceptRelDTOs for each value set mapping
+                                CdsCodeDTO cdsCodeDTO = valueSetCdsCodeRelDTO.getCdsCodeDTO();
+                                OpenCdsConceptRelDTO tempOpenCdsConceptRelDTO = new OpenCdsConceptRelDTO();
+                                CdsCodeSystemDTO tempCdsCodeSystemDTO = new CdsCodeSystemDTO();
+                                tempCdsCodeSystemDTO.setOid(cdsCodeDTO.getCodeSystem());
+                                tempCdsCodeSystemDTO.setName(cdsCodeDTO.getCodeSystemName());
+                                tempOpenCdsConceptRelDTO.setCdsCodeSystemDTO(tempCdsCodeSystemDTO);
+                                tempOpenCdsConceptRelDTO.setCdsCodeDTO(cdsCodeDTO);
 
-                                    // send it up
-                                    addConceptMapping(
-                                            conceptDeterminationMethod,
-                                            openCdsConceptDTO,
-                                            tempOpenCdsConceptRelDTO,
-                                            objectFactory,
-                                            addedConceptMappings,
-                                            addedMappedCodeSystems,
-                                            addedMappedCodeSystemCodes,
-                                            codeSystem);
-                                }
-                            } else {
-                                logger.error(METHODNAME,
-                                        "case VALUE_SET valueSetDTO is null for mapping: ", openCdsConceptRelDTO.getRelationshipId(),
-                                        " - cdm: ", openCdsConceptRelDTO.getConceptDeterminationMethodDTO(),
-                                        " - concept name: ", openCdsConceptRelDTO.getName());
+                                // send it up
+                                addConceptMapping(
+                                        conceptDeterminationMethod,
+                                        openCdsConceptDTO,
+                                        tempOpenCdsConceptRelDTO,
+                                        objectFactory,
+                                        addedConceptMappings,
+                                        addedMappedCodeSystems,
+                                        addedMappedCodeSystemCodes,
+                                        codeSystem);
                             }
                             break;
                         }
                         case CODE_SYSTEM: {
                             CdsCodeSystemDTO cdsCodeSystemDTO = openCdsConceptRelDTO.getCdsCodeSystemDTO();
-                            if (cdsCodeSystemDTO != null) {
-                                for (CdsCodeDTO cdsCodeDTO : cdsCodeSystemDTO.getCdsCodeDTOs()) {
-                                    // create temporary OpenCdsConceptRelDTOs for each code system mapping
-                                    OpenCdsConceptRelDTO tempOpenCdsConceptRelDTO = new OpenCdsConceptRelDTO();
-                                    tempOpenCdsConceptRelDTO.setCdsCodeSystemDTO(cdsCodeSystemDTO);
-                                    tempOpenCdsConceptRelDTO.setCdsCodeDTO(cdsCodeDTO);
+                            for (CdsCodeDTO cdsCodeDTO : cdsCodeSystemDTO.getCdsCodeDTOs()) {
+                                // create temporary OpenCdsConceptRelDTOs for each code system mapping
+                                OpenCdsConceptRelDTO tempOpenCdsConceptRelDTO = new OpenCdsConceptRelDTO();
+                                tempOpenCdsConceptRelDTO.setCdsCodeSystemDTO(cdsCodeSystemDTO);
+                                tempOpenCdsConceptRelDTO.setCdsCodeDTO(cdsCodeDTO);
 
-                                    // send it up
-                                    addConceptMapping(
-                                            conceptDeterminationMethod,
-                                            openCdsConceptDTO,
-                                            tempOpenCdsConceptRelDTO,
-                                            objectFactory,
-                                            addedConceptMappings,
-                                            addedMappedCodeSystems,
-                                            addedMappedCodeSystemCodes,
-                                            codeSystem);
-                                }
-                            } else {
-                                logger.error(METHODNAME,
-                                        "case CODE_SYSTEM cdsCodeSystemDTO is null for mapping: ", openCdsConceptRelDTO.getRelationshipId(),
-                                        " - cdm: ", openCdsConceptRelDTO.getConceptDeterminationMethodDTO(),
-                                        " - concept name: ", openCdsConceptRelDTO.getName());
+                                // send it up
+                                addConceptMapping(
+                                        conceptDeterminationMethod,
+                                        openCdsConceptDTO,
+                                        tempOpenCdsConceptRelDTO,
+                                        objectFactory,
+                                        addedConceptMappings,
+                                        addedMappedCodeSystems,
+                                        addedMappedCodeSystemCodes,
+                                        codeSystem);
                             }
                             break;
                         }

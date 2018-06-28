@@ -35,18 +35,13 @@ import org.cdsframework.base.BaseBO;
 import org.cdsframework.dto.CdsCodeSystemDTO;
 import org.cdsframework.dto.CdsListDTO;
 import org.cdsframework.dto.CdsListItemDTO;
-import org.cdsframework.dto.ConceptDeterminationMethodDTO;
 import org.cdsframework.dto.OpenCdsConceptDTO;
 import org.cdsframework.dto.OpenCdsConceptRelDTO;
+import org.cdsframework.dto.OpenCdsConceptRelDTO.MappingType;
 import org.cdsframework.dto.PropertyBagDTO;
 import org.cdsframework.dto.SessionDTO;
-import org.cdsframework.ejb.local.PropertyMGRLocal;
 import org.cdsframework.enumeration.CdsListType;
-import org.cdsframework.enumeration.CoreErrorCode;
 import org.cdsframework.enumeration.DTOState;
-import org.cdsframework.enumeration.DeploymentEnvironment;
-import org.cdsframework.enumeration.MappingType;
-import org.cdsframework.enumeration.Operation;
 import org.cdsframework.exceptions.AuthenticationException;
 import org.cdsframework.exceptions.AuthorizationException;
 import org.cdsframework.exceptions.ConstraintViolationException;
@@ -55,7 +50,6 @@ import org.cdsframework.exceptions.NotFoundException;
 import org.cdsframework.exceptions.ValidationException;
 import org.cdsframework.group.Update;
 import org.cdsframework.util.AuthenticationUtils;
-import org.cdsframework.util.BrokenRule;
 import org.cdsframework.util.DTOUtils;
 
 /**
@@ -69,38 +63,6 @@ public class OpenCdsConceptRelBO extends BaseBO<OpenCdsConceptRelDTO> {
     private CdsListBO cdsListBO;
     @EJB
     private CdsListItemBO cdsListItemBO;
-    @EJB
-    private PropertyMGRLocal propertyMGRLocal;
-    @EJB
-    private ConceptDeterminationMethodBO conceptDeterminationMethodBO;
-
-    @Override
-    protected void validateAddOrUpdate(OpenCdsConceptRelDTO baseDTO, Operation operation, Class queryClass, List<Class> validationClasses, SessionDTO sessionDTO, PropertyBagDTO propertyBagDTO)
-            throws ValidationException, NotFoundException, ConstraintViolationException, MtsException, AuthenticationException, AuthorizationException {
-        final String METHODNAME = "validateAddOrUpdate ";
-        if (null != baseDTO.getMappingType()) switch (baseDTO.getMappingType()) {
-            case CODE_SYSTEM:
-                if (baseDTO.getCdsCodeSystemDTO() == null || baseDTO.getCdsCodeSystemDTO().getCodeSystemId() == null) {
-                    throw new ValidationException(new BrokenRule(CoreErrorCode.FieldCanNotBeEmpty, "A code system must be selected."));
-                }
-                break;
-            case VALUE_SET:
-                if (baseDTO.getValueSetDTO()== null || baseDTO.getValueSetDTO().getValueSetId()== null) {
-                    throw new ValidationException(new BrokenRule(CoreErrorCode.FieldCanNotBeEmpty, "A value set must be selected."));
-                }
-                break;
-            case CODE:
-                if (baseDTO.getCdsCodeSystemDTO() == null || baseDTO.getCdsCodeSystemDTO().getCodeSystemId() == null) {
-                    throw new ValidationException(new BrokenRule(CoreErrorCode.FieldCanNotBeEmpty, "A code system must be selected."));
-                }
-                if (baseDTO.getCdsCodeDTO()== null || baseDTO.getCdsCodeDTO().getCodeId() == null) {
-                    throw new ValidationException(new BrokenRule(CoreErrorCode.FieldCanNotBeEmpty, "A code must be selected."));
-                }
-                break;
-            default:
-                break;
-        }
-    }
 
     @Override
     protected void preAdd(OpenCdsConceptRelDTO baseDTO, Class queryClass, SessionDTO sessionDTO, PropertyBagDTO propertyBagDTO) throws ConstraintViolationException, NotFoundException, MtsException, ValidationException, AuthenticationException, AuthorizationException {
@@ -114,36 +76,22 @@ public class OpenCdsConceptRelBO extends BaseBO<OpenCdsConceptRelDTO> {
 
     private void preAddUpdate(OpenCdsConceptRelDTO baseDTO, Class queryClass, SessionDTO sessionDTO, PropertyBagDTO propertyBagDTO) throws ConstraintViolationException, NotFoundException, MtsException, ValidationException, AuthenticationException, AuthorizationException {
         OpenCdsConceptRelDTO openCdsConceptRelDTO = (OpenCdsConceptRelDTO) baseDTO;
-        if (null != openCdsConceptRelDTO.getMappingType()) switch (openCdsConceptRelDTO.getMappingType()) {
-            case CODE_SYSTEM:
-                openCdsConceptRelDTO.setCdsCodeDTO(null);
-                openCdsConceptRelDTO.setValueSetDTO(null);
-                break;
-            case VALUE_SET:
-                openCdsConceptRelDTO.setCdsCodeSystemDTO(null);
-                openCdsConceptRelDTO.setCdsCodeDTO(null);
-                break;
-            case CODE:
-                openCdsConceptRelDTO.setValueSetDTO(null);
-                break;
-            default:
-                break;
+        if (openCdsConceptRelDTO.getMappingType() == MappingType.CODE_SYSTEM) {
+            openCdsConceptRelDTO.setCdsCodeDTO(null);
+            openCdsConceptRelDTO.setValueSetDTO(null);
         }
-        if (baseDTO.getConceptDeterminationMethodDTO() == null || baseDTO.getConceptDeterminationMethodDTO().getCodeId() == null) {
-            String defaultConceptDeterminationMethodCode = propertyMGRLocal.get("DEFAULT_CDM", String.class);
-            ConceptDeterminationMethodDTO conceptDeterminationMethodDTO = new ConceptDeterminationMethodDTO();
-            conceptDeterminationMethodDTO.setCode(defaultConceptDeterminationMethodCode);
-            conceptDeterminationMethodDTO = conceptDeterminationMethodBO.findByQueryMain(conceptDeterminationMethodDTO, ConceptDeterminationMethodDTO.ByCode.class, new ArrayList<Class>(), sessionDTO, propertyBagDTO);
-            baseDTO.setConceptDeterminationMethodDTO(conceptDeterminationMethodDTO);
+        else if (openCdsConceptRelDTO.getMappingType() == MappingType.VALUE_SET) {
+            openCdsConceptRelDTO.setCdsCodeSystemDTO(null);
+            openCdsConceptRelDTO.setCdsCodeDTO(null);
         }
-        if (baseDTO.getDeploymentEnvironment()== null) {
-            baseDTO.setDeploymentEnvironment(DeploymentEnvironment.PRODUCTION);
+        else if (openCdsConceptRelDTO.getMappingType() == MappingType.CODE) {
+            openCdsConceptRelDTO.setValueSetDTO(null);
         }
+        
     }
-
+    
     /**
-     * If an OpenCdsConceptRelDTO is added then add it to any relevant CONCEPT
-     * based lists.
+     * If an OpenCdsConceptRelDTO is added then add it to any relevant CONCEPT based lists.
      *
      * @param baseDTO
      * @param queryClass
@@ -209,8 +157,7 @@ public class OpenCdsConceptRelBO extends BaseBO<OpenCdsConceptRelDTO> {
     }
 
     /**
-     * Delete any list items related to this instance before deleting this
-     * instance.
+     * Delete any list items related to this instance before deleting this instance.
      *
      * @param baseDTO
      * @param queryClass
@@ -230,6 +177,7 @@ public class OpenCdsConceptRelBO extends BaseBO<OpenCdsConceptRelDTO> {
         final String METHODNAME = "preDelete ";
 
         // delete list items related to this concept if this is the last item responsible for the relationship.
+
         CdsCodeSystemDTO cdsCodeSystemDTO = new CdsCodeSystemDTO();
         cdsCodeSystemDTO.setCodeSystemId(baseDTO.getCdsCodeSystemDTO() != null ? baseDTO.getCdsCodeSystemDTO().getCodeSystemId() : null);
 

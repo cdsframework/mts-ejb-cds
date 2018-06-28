@@ -59,7 +59,6 @@ import org.cdsframework.dto.ValueSetSubValueSetRelDTO;
 import org.cdsframework.enumeration.CdsListType;
 import org.cdsframework.enumeration.DTOState;
 import org.cdsframework.enumeration.CoreErrorCode;
-import org.cdsframework.enumeration.MappingType;
 import org.cdsframework.enumeration.Operation;
 import org.cdsframework.exceptions.AuthenticationException;
 import org.cdsframework.exceptions.AuthorizationException;
@@ -834,7 +833,7 @@ public class CdsListBO extends BaseBO<CdsListDTO> {
                         cdsListItem.setCdsListItemValue(openCdsConceptDTO.getDisplayName());
                         logger.debug(METHODNAME, "openCdsConceptDTO.getOpenCdsConceptRelDTOs(): ", openCdsConceptDTO.getOpenCdsConceptRelDTOs());
                         for (OpenCdsConceptRelDTO openCdsConceptRelDTO : openCdsConceptDTO.getOpenCdsConceptRelDTOs()) {
-                            if (openCdsConceptRelDTO.getMappingType() == MappingType.CODE) {
+                            if (openCdsConceptRelDTO.getMappingType() == OpenCdsConceptRelDTO.MappingType.CODE) {
                                 if (cdsCodeSystemDTO != null
                                         && cdsCodeSystemDTO.getOid().equals(openCdsConceptRelDTO.getCdsCodeDTO().getCodeSystem())) {
                                     logger.debug(METHODNAME, "openCdsConceptRelDTO.getConceptDeterminationMethodDTO().getCode(): ",
@@ -848,9 +847,9 @@ public class CdsListBO extends BaseBO<CdsListDTO> {
                                     cdsListItemConceptMapping.setCodeSystemName(openCdsConceptRelDTO.getCdsCodeSystemDTO() != null ? openCdsConceptRelDTO.getCdsCodeSystemDTO().getName() : null);
                                     cdsListItem.getCdsListItemConceptMappings().add(cdsListItemConceptMapping);
                                 }
-                            } else if (openCdsConceptRelDTO.getMappingType() == MappingType.CODE_SYSTEM) {
+                            } else if (openCdsConceptRelDTO.getMappingType() == OpenCdsConceptRelDTO.MappingType.CODE_SYSTEM) {
                                 throw new UnsupportedOperationException("Mapping type CODE_SYSTEM not yet implemented!");
-                            } else if (openCdsConceptRelDTO.getMappingType() == MappingType.VALUE_SET) {
+                            } else if (openCdsConceptRelDTO.getMappingType() == OpenCdsConceptRelDTO.MappingType.VALUE_SET) {
                                 throw new UnsupportedOperationException("Mapping type VALUE_SET not yet implemented!");
                             }
                         }
@@ -899,7 +898,7 @@ public class CdsListBO extends BaseBO<CdsListDTO> {
                 cdsListSpecificationFile.getCdsListItems().add(cdsListItem);
                 logger.debug(METHODNAME, "openCdsConceptDTO.getOpenCdsConceptRelDTOs(): ", openCdsConceptDTO.getOpenCdsConceptRelDTOs());
                 for (OpenCdsConceptRelDTO openCdsConceptRelDTO : openCdsConceptDTO.getOpenCdsConceptRelDTOs()) {
-                    if (openCdsConceptRelDTO.getMappingType() == MappingType.CODE) {
+                    if (openCdsConceptRelDTO.getMappingType() == OpenCdsConceptRelDTO.MappingType.CODE) {
                         if (cdsCodeSystemDTO != null
                                 && cdsCodeSystemDTO.getOid().equals(openCdsConceptRelDTO.getCdsCodeDTO().getCodeSystem())) {
                             logger.debug(METHODNAME, "openCdsConceptRelDTO.getConceptDeterminationMethodDTO().getCode(): ",
@@ -913,9 +912,9 @@ public class CdsListBO extends BaseBO<CdsListDTO> {
                             cdsListItemConceptMapping.setCodeSystemName(openCdsConceptRelDTO.getCdsCodeSystemDTO() != null ? openCdsConceptRelDTO.getCdsCodeSystemDTO().getName() : null);
                             cdsListItem.getCdsListItemConceptMappings().add(cdsListItemConceptMapping);
                         }
-                    } else if (openCdsConceptRelDTO.getMappingType() == MappingType.CODE_SYSTEM) {
+                    } else if (openCdsConceptRelDTO.getMappingType() == OpenCdsConceptRelDTO.MappingType.CODE_SYSTEM) {
                         throw new UnsupportedOperationException("Mapping type CODE_SYSTEM not yet implemented!");
-                    } else if (openCdsConceptRelDTO.getMappingType() == MappingType.VALUE_SET) {
+                    } else if (openCdsConceptRelDTO.getMappingType() == OpenCdsConceptRelDTO.MappingType.VALUE_SET) {
                         throw new UnsupportedOperationException("Mapping type VALUE_SET not yet implemented!");
                     }
                 }

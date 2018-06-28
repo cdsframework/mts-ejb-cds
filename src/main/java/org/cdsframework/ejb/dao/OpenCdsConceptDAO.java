@@ -159,7 +159,7 @@ public class OpenCdsConceptDAO extends BaseDAO<OpenCdsConceptDTO> {
 
             @Override
             protected String getQueryDML(BaseDTO baseDTO, SessionDTO sessionDTO, PropertyBagDTO propertyBagDTO) {
-                return "select distinct oc.* from vw_opencds_concept oc"
+                return "select distinct oc.* from opencds_concept oc"
                         + " join opencds_concept_rel ocr on ocr.concept_code_id = oc.code_id"
                         + " join concept_determination_method cdm on cdm.code_id = ocr.determination_method"
                         + " where cdm.code = :cdm_code order by oc.code;";
@@ -176,7 +176,7 @@ public class OpenCdsConceptDAO extends BaseDAO<OpenCdsConceptDTO> {
 
             @Override
             protected String getQueryDML(BaseDTO baseDTO, SessionDTO sessionDTO, PropertyBagDTO propertyBagDTO) {
-                return "select * from vw_opencds_concept where code = :code";
+                return "select * from opencds_concept where code = :code";
             }
         }, false);
 
@@ -184,7 +184,7 @@ public class OpenCdsConceptDAO extends BaseDAO<OpenCdsConceptDTO> {
 
             @Override
             protected String getQueryDML(BaseDTO baseDTO, SessionDTO sessionDTO, PropertyBagDTO propertyBagDTO) {
-                return "select * from vw_opencds_concept oc "
+                return "select * from opencds_concept oc "
                         + " where exists (select * from opencds_concept_rel ocr, cds_code cc "
                         + "    where oc.CODE_ID = ocr.CONCEPT_CODE_ID and ocr.CDS_CODE_ID = cc.CODE_ID and cc.CODE_SYSTEM_ID = :code_system_id )";
             }
@@ -200,7 +200,7 @@ public class OpenCdsConceptDAO extends BaseDAO<OpenCdsConceptDTO> {
         this.registerDML(ByGeneralProperties.class, new QueryCallback(getDtoTableName()) {
             @Override
             public String getQueryDML(BaseDTO baseDTO, SessionDTO sessionDTO, PropertyBagDTO propertyBagDTO) {
-                String sql = "select * from vw_opencds_concept ";
+                String sql = "select * from opencds_concept ";
                 if (baseDTO.getQueryMap().containsKey("code_system_id")) {
                     setNonWildcardPredicateValue(baseDTO,
                             " exists (select * from OPENCDS_CONCEPT_REL ocr, cds_code cc "
