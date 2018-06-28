@@ -1,0 +1,66 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ejb-jar xmlns = "http://java.sun.com/xml/ns/javaee"
+         version = "3.1"
+         xmlns:xsi = "http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation = "http://java.sun.com/xml/ns/javaee http://java.sun.com/xml/ns/javaee/ejb-jar_3_1.xsd">
+    <description>MTS CDS EJBs</description>
+    <display-name>mts</display-name>
+    <enterprise-beans>
+        <session>
+            <ejb-name>CdsPlugin</ejb-name>
+
+            <!-- opencds service -->
+            <env-entry>
+                <env-entry-name>CDS_ENDPOINT</env-entry-name>
+                <env-entry-type>java.lang.String</env-entry-type>
+                <env-entry-value>https://cds.hln.com/opencds-decision-support-service/evaluate</env-entry-value>
+            </env-entry>
+            <env-entry>
+                <env-entry-name>CDS_TIMEOUT</env-entry-name>
+                <env-entry-type>java.lang.Integer</env-entry-type>
+                <env-entry-value>20000</env-entry-value>
+            </env-entry>
+            <env-entry>
+                <env-entry-name>CDS_ENABLED</env-entry-name>
+                <env-entry-type>java.lang.Boolean</env-entry-type>
+                <env-entry-value>true</env-entry-value>
+            </env-entry>
+
+            <!-- import/export data exchange -->
+            <env-entry>
+                <env-entry-name>CDS_MAX_IMPORT_SIZE</env-entry-name>
+                <env-entry-type>java.lang.Long</env-entry-type>
+                <env-entry-value>5242880</env-entry-value>
+            </env-entry>
+            <env-entry>
+                <env-entry-name>CDS_SUPPORTED_IMPORT_MIME_TYPES</env-entry-name>
+                <env-entry-type>java.lang.String</env-entry-type>
+                <env-entry-value>text/xml,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,application/octet-stream,application/x-zip-compressed,application/zip,application/vnd.ms-excel.sheet.macroEnabled.12</env-entry-value>
+            </env-entry>
+            
+            <!-- vsac rest service setup authentication credentials -->
+            <env-entry>
+                <env-entry-name>VSAC_BASE_URI</env-entry-name>
+                <env-entry-type>java.lang.String</env-entry-type>
+                <env-entry-value>https://vsac.nlm.nih.gov/vsac/</env-entry-value>
+            </env-entry>
+            <env-entry>
+                <env-entry-name>VSAC_USERNAME</env-entry-name>
+                <env-entry-type>java.lang.String</env-entry-type>
+                <env-entry-value>username</env-entry-value>
+            </env-entry>
+            <env-entry>
+                <env-entry-name>VSAC_PASSWORD</env-entry-name>
+                <env-entry-type>java.lang.String</env-entry-type>
+                <env-entry-value>password</env-entry-value>
+            </env-entry>
+
+            <!-- db resources -->
+            <env-entry>
+                <env-entry-name>DB_RESOURCES</env-entry-name>
+                <env-entry-type>java.lang.String</env-entry-type>
+                <env-entry-value>CDS|jdbc/cds</env-entry-value>
+            </env-entry>
+        </session>
+    </enterprise-beans>
+</ejb-jar>
