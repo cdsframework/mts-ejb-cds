@@ -69,7 +69,6 @@ import org.cdsframework.exceptions.MtsException;
 import org.cdsframework.exceptions.NotFoundException;
 import org.cdsframework.exceptions.ValidationException;
 import org.cdsframework.group.Add;
-import org.cdsframework.group.CacheAll;
 import org.cdsframework.group.FindAll;
 import org.cdsframework.group.Update;
 import org.cdsframework.group.SimpleExchange;
@@ -151,7 +150,7 @@ public class CdsListBO extends BaseBO<CdsListDTO> {
             throws MtsException, ValidationException, NotFoundException, AuthenticationException, AuthorizationException {
         final String METHODNAME = "verifyEnumLists ";
 //        long start = System.nanoTime();
-        if (logger.isDebugEnabled() && queryClass != FindAll.class && queryClass != CacheAll.class) {
+        if (logger.isDebugEnabled() && queryClass != FindAll.class) {
             for (CdsListDTO baseDTO : baseDTOs) {
                 try {
                     for (CdsVersionDTO cdsVersionDTO : baseDTO.getRelatedVersions()) {
