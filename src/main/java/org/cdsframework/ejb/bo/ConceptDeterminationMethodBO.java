@@ -82,9 +82,12 @@ public class ConceptDeterminationMethodBO extends BaseBO<ConceptDeterminationMet
             if (environment == null) {
                 environment = DeploymentEnvironment.PRODUCTION;
             }
-            logger.info(METHODNAME, "codeSystem: ", codeSystem);
+            logger.info(METHODNAME, "environment: ", environment);
 
             Boolean deploy = propertyBagDTO.get("deploy", Boolean.class);
+            if (deploy == null) {
+                deploy = false;
+            }
             logger.info(METHODNAME, "deploy: ", deploy);
 
             OpenCDSConfigUploader openCDSConfigUploader = propertyBagDTO.get("openCDSConfigUploader", OpenCDSConfigUploader.class);
