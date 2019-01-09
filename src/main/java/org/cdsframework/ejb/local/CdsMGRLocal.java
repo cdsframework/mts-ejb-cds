@@ -256,6 +256,10 @@ public class CdsMGRLocal {
             SessionDTO sessionDTO,
             PropertyBagDTO propertyBagDTO)
             throws MtsException, ValidationException, NotFoundException, AuthenticationException, AuthorizationException, ConstraintViolationException {
+        final String METHODNAME = "getConceptDeterminationMethod ";
+        logger.info(METHODNAME, "codeSystem=", codeSystem);
+        logger.info(METHODNAME, "environment=", environment);
+        logger.info(METHODNAME, "audit=", audit);
         ObjectFactory objectFactory = new ObjectFactory();
         ConceptDeterminationMethod result = objectFactory.createConceptDeterminationMethod();
 
