@@ -114,7 +114,7 @@ public class ValueSetBO extends BaseBO<ValueSetDTO> {
         List<CdsListDTO> cdsLists = cdsListBO.findByQueryListMain(
                 cdsListDTO,
                 CdsListDTO.ByValueSet.class,
-                new ArrayList<Class>(),
+                new ArrayList<>(),
                 AuthenticationUtils.getInternalSessionDTO(),
                 propertyBagDTO);
         for (CdsListDTO item : cdsLists) {
@@ -340,25 +340,7 @@ public class ValueSetBO extends BaseBO<ValueSetDTO> {
                     logger.info(METHODNAME, "fileName is null!");
                 }
             }
-        } catch (UnsupportedOperationException e) {
-            logger.error(e);
-            throw new MtsException(e.getMessage());
-        } catch (AuthenticationException e) {
-            logger.error(e);
-            throw new MtsException(e.getMessage());
-        } catch (AuthorizationException e) {
-            logger.error(e);
-            throw new MtsException(e.getMessage());
-        } catch (ConstraintViolationException e) {
-            logger.error(e);
-            throw new MtsException(e.getMessage());
-        } catch (MtsException e) {
-            logger.error(e);
-            throw new MtsException(e.getMessage());
-        } catch (NotFoundException e) {
-            logger.error(e);
-            throw new MtsException(e.getMessage());
-        } catch (ValidationException e) {
+        } catch (UnsupportedOperationException | AuthenticationException | AuthorizationException | ConstraintViolationException | MtsException | NotFoundException | ValidationException e) {
             logger.error(e);
             throw new MtsException(e.getMessage());
         }
@@ -428,7 +410,7 @@ public class ValueSetBO extends BaseBO<ValueSetDTO> {
             ValueSetDTO newValueSet = null;
             if (vsacData != null) {
                 logger.info(METHODNAME, "attempting to translate vsac data to new value set dto");
-                newValueSet = VsacUtils.getValueSetFromVsacData(vsacData);
+                newValueSet = VsacUtils.getValueSetFromVsacData(vsacData, profile, version);
                 if (newValueSet != null) {
                     logger.info(METHODNAME, "successfully translated vsac data to new value set dto");
                     logger.info(METHODNAME, "newValueSet=", newValueSet);
@@ -471,7 +453,14 @@ public class ValueSetBO extends BaseBO<ValueSetDTO> {
                     existingValueSet.setVersionDescription(newValueSet.getVersionDescription());
                     existingValueSet.setVersionStatus(newValueSet.getVersionStatus());
                     logger.info(METHODNAME, "createing new value set ", existingValueSet.getName(), " - ", existingValueSet.getCode(), " - ", existingValueSet.getOid());
-                    existingValueSet = addMain(existingValueSet, Add.class, sessionDTO, propertyBagDTO);
+                    existingValueSet = addMain(existingValueSet, Add.class, sessionDTO, new PropertyBagDTO());
+                } else {
+                    existingValueSet.setName(newValueSet.getName());
+                    existingValueSet.setCode(newValueSet.getName());
+                    existingValueSet.setDescription(newValueSet.getDescription());
+                    existingValueSet.setVersion(newValueSet.getVersion());
+                    existingValueSet.setVersionStatus(newValueSet.getVersionStatus());
+                    existingValueSet = updateMain(newValueSet, Update.class, sessionDTO, new PropertyBagDTO());
                 }
 
                 // iterate over the codes and code systems to determine if they exist - if not - create them
@@ -486,7 +475,7 @@ public class ValueSetBO extends BaseBO<ValueSetDTO> {
                         codeSystemDTO = cdsCodeSystemBO.findByQueryMain(
                                 codeSystemDTO,
                                 CdsCodeSystemDTO.ByOid.class,
-                                new ArrayList<Class>(),
+                                new ArrayList<>(),
                                 sessionDTO,
                                 propertyBagDTO);
                     } catch (NotFoundException e) {
@@ -502,7 +491,7 @@ public class ValueSetBO extends BaseBO<ValueSetDTO> {
                     // next, check the code
                     CdsCodeDTO foundCdsCodeDTO = null;
                     try {
-                        foundCdsCodeDTO = cdsCodeBO.findByQueryMain(item, CdsCodeDTO.ByCodeSystemCode.class, new ArrayList<Class>(), sessionDTO, propertyBagDTO);
+                        foundCdsCodeDTO = cdsCodeBO.findByQueryMain(item, CdsCodeDTO.ByCodeSystemCode.class, new ArrayList<>(), sessionDTO, propertyBagDTO);
                     } catch (NotFoundException e) {
                         // no hacer nada
                     }
@@ -598,27 +587,11 @@ public class ValueSetBO extends BaseBO<ValueSetDTO> {
                 // Save the new value set...
                 existingValueSet = updateMain(existingValueSet, Update.class, sessionDTO, propertyBagDTO);
                 logger.info(METHODNAME, "finished processing existing: ", existingValueSet.getName(), " - ", existingValueSet.getCode(), " - ", existingValueSet.getOid());
+            } else {
+                throw new MtsException("No value set data was received or could be parsed from VSAC service response.");
             }
 
-        } catch (UnsupportedOperationException e) {
-            logger.error(e);
-            throw new MtsException(e.getMessage());
-        } catch (AuthenticationException e) {
-            logger.error(e);
-            throw new MtsException(e.getMessage());
-        } catch (AuthorizationException e) {
-            logger.error(e);
-            throw new MtsException(e.getMessage());
-        } catch (ConstraintViolationException e) {
-            logger.error(e);
-            throw new MtsException(e.getMessage());
-        } catch (MtsException e) {
-            logger.error(e);
-            throw new MtsException(e.getMessage());
-        } catch (NotFoundException e) {
-            logger.error(e);
-            throw new MtsException(e.getMessage());
-        } catch (ValidationException e) {
+        } catch (UnsupportedOperationException | AuthenticationException | AuthorizationException | ConstraintViolationException | MtsException | NotFoundException | ValidationException e) {
             logger.error(e);
             throw new MtsException(e.getMessage());
         }
