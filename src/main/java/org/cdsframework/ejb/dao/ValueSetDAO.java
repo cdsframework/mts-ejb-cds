@@ -67,7 +67,8 @@ public class ValueSetDAO extends BaseDAO<ValueSetDTO> {
             }
 
             @Override
-            protected void getCallbackNamedParameters(MapSqlParameterSource namedParameters, BaseDTO baseDTO, SessionDTO sessionDTO, PropertyBagDTO propertyBagDTO) throws MtsException {
+            protected void getCallbackNamedParameters(MapSqlParameterSource namedParameters, BaseDTO baseDTO, SessionDTO sessionDTO, PropertyBagDTO propertyBagDTO)
+                    throws MtsException {
                 setLowerQueryMapValue(baseDTO, "text", "text", namedParameters);
             }
 
@@ -86,6 +87,44 @@ public class ValueSetDAO extends BaseDAO<ValueSetDTO> {
             @Override
             protected String getQueryDML(BaseDTO baseDTO, SessionDTO sessionDTO, PropertyBagDTO propertyBagDTO) {
                 return "select * from value_set where oid = :oid and version = :version";
+            }
+        }, false);
+
+        this.registerDML(ValueSetDTO.ByCodeOidVersion.class, new QueryCallback(getDtoTableName()) {
+
+            @Override
+            protected String getQueryDML(BaseDTO baseDTO, SessionDTO sessionDTO, PropertyBagDTO propertyBagDTO) {
+                return "select * from value_set where oid = :oid and version = :version and code = :code";
+            }
+        }, false);
+
+        this.registerDML(ValueSetDTO.ByOidVersionStatus.class, new QueryCallback(getDtoTableName()) {
+
+            @Override
+            protected String getQueryDML(BaseDTO baseDTO, SessionDTO sessionDTO, PropertyBagDTO propertyBagDTO) {
+                if (baseDTO instanceof ValueSetDTO) {
+                    ValueSetDTO valueSetDTO = (ValueSetDTO) baseDTO;
+                    logger.info("ByOidVersionStatus valueSetDTO.getOid()=", valueSetDTO.getOid());
+                    logger.info("ByOidVersionStatus valueSetDTO.getCode()=", valueSetDTO.getCode());
+                    logger.info("ByOidVersionStatus valueSetDTO.getVersion()=", valueSetDTO.getVersion());
+                    logger.info("ByOidVersionStatus valueSetDTO.getVersionStatus()=", valueSetDTO.getVersionStatus());
+                }
+                return "select * from value_set where oid = :oid and version_status = :version_status";
+            }
+        }, false);
+
+        this.registerDML(ValueSetDTO.ByCodeOidVersionVersionStatus.class, new QueryCallback(getDtoTableName()) {
+
+            @Override
+            protected String getQueryDML(BaseDTO baseDTO, SessionDTO sessionDTO, PropertyBagDTO propertyBagDTO) {
+                if (baseDTO instanceof ValueSetDTO) {
+                    ValueSetDTO valueSetDTO = (ValueSetDTO) baseDTO;
+                    logger.info("ByOidVersionStatus valueSetDTO.getOid()=", valueSetDTO.getOid());
+                    logger.info("ByOidVersionStatus valueSetDTO.getCode()=", valueSetDTO.getCode());
+                    logger.info("ByOidVersionStatus valueSetDTO.getVersion()=", valueSetDTO.getVersion());
+                    logger.info("ByOidVersionStatus valueSetDTO.getVersionStatus()=", valueSetDTO.getVersionStatus());
+                }
+                return "select * from value_set where oid = :oid and version = :version and code = :code and version_status = :version_status";
             }
         }, false);
     }

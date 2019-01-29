@@ -62,6 +62,7 @@ import org.cdsframework.group.Delete;
 import org.cdsframework.group.SimpleExchange;
 import org.cdsframework.group.Update;
 import org.cdsframework.util.AuthenticationUtils;
+import org.cdsframework.util.DTOUtils;
 import org.cdsframework.util.FileUtils;
 import org.cdsframework.util.PhinVadsUtils;
 import org.cdsframework.util.StringUtils;
@@ -424,26 +425,48 @@ public class ValueSetBO extends BaseBO<ValueSetDTO> {
 
             // Save the new value set...
             if (newValueSet != null) {
+                logger.info(METHODNAME, "profile=", profile);
+                logger.info(METHODNAME, "version=", version);
+                logger.info(METHODNAME, "newValueSet.getName()=", newValueSet.getName());
+                logger.info(METHODNAME, "newValueSet.getOid()=", newValueSet.getOid());
+                logger.info(METHODNAME, "newValueSet.getCode()=", newValueSet.getCode());
+                logger.info(METHODNAME, "newValueSet.getDescription()=", newValueSet.getDescription());
+                logger.info(METHODNAME, "newValueSet.getVersion()=", newValueSet.getVersion());
+                logger.info(METHODNAME, "newValueSet.getVersionStatus()=", newValueSet.getVersionStatus());
+                logger.info(METHODNAME, "newValueSet.getVersionDescription()=", newValueSet.getVersionDescription());
 
-                ValueSetDTO existingValueSet;
 
-                //Determine if the value set already exists (by oid and version)...
-                existingValueSet = new ValueSetDTO();
-                existingValueSet.setOid(newValueSet.getOid());
-                existingValueSet.setVersion(newValueSet.getVersion());
-                try {
-                    existingValueSet = findByQueryMain(
-                            existingValueSet,
-                            ValueSetDTO.ByOidVersion.class,
-                            getDtoChildClasses(),
-                            sessionDTO,
-                            propertyBagDTO);
-                } catch (NotFoundException e) {
-                    existingValueSet = null;
-                }
+//                //Determine if the value set already exists (by oid and version)...
+//                existingValueSet = new ValueSetDTO();
+//                existingValueSet.setOid(newValueSet.getOid());
+//                existingValueSet.setVersion(newValueSet.getVersion());
+//                existingValueSet.setCode(newValueSet.getCode());
+//                existingValueSet.setVersionStatus(newValueSet.getVersionStatus());
+//                try {
+//                    existingValueSet = findByQueryMain(
+//                            existingValueSet,
+//                            ValueSetDTO.ByCodeOidVersionVersionStatus.class,
+//                            getDtoChildClasses(),
+//                            sessionDTO,
+//                            propertyBagDTO);
+//                } catch (NotFoundException e) {
+//                    existingValueSet = null;
+//                }
+                ValueSetDTO queryDTO = new ValueSetDTO();
+                queryDTO.setOid(newValueSet.getOid());
+                List<ValueSetDTO> results = findByQueryListMain(
+                        queryDTO,
+                        ValueSetDTO.ByOid.class,
+                        new ArrayList<>(),
+                        sessionDTO,
+                        new PropertyBagDTO());
 
+                ValueSetDTO existingValueSet = VsacUtils.getExistingValueSetFromList(results, newValueSet.getVersion(), newValueSet.getVersionStatus());
+
+                // scenario #4
                 // If it does not exist, create it...
                 if (existingValueSet == null) {
+                    logger.info(METHODNAME, "no matching dto found - creating new one. scenario #4");
                     existingValueSet = new ValueSetDTO();
                     existingValueSet.setName(newValueSet.getName());
                     existingValueSet.setOid(newValueSet.getOid());
@@ -455,12 +478,16 @@ public class ValueSetBO extends BaseBO<ValueSetDTO> {
                     logger.info(METHODNAME, "createing new value set ", existingValueSet.getName(), " - ", existingValueSet.getCode(), " - ", existingValueSet.getOid());
                     existingValueSet = addMain(existingValueSet, Add.class, sessionDTO, new PropertyBagDTO());
                 } else {
+                    existingValueSet = findByPrimaryKeyMain(existingValueSet, getDtoChildClasses(), sessionDTO, propertyBagDTO);
+                    logger.info(METHODNAME, "matching dto found - updating...");
                     existingValueSet.setName(newValueSet.getName());
-                    existingValueSet.setCode(newValueSet.getName());
-                    existingValueSet.setDescription(newValueSet.getDescription());
+                    existingValueSet.setCode(newValueSet.getCode());
                     existingValueSet.setVersion(newValueSet.getVersion());
+                    existingValueSet.setDescription(newValueSet.getDescription());
                     existingValueSet.setVersionStatus(newValueSet.getVersionStatus());
-                    existingValueSet = updateMain(newValueSet, Update.class, sessionDTO, new PropertyBagDTO());
+                    existingValueSet.setVersionDescription(newValueSet.getVersionDescription());
+                    DTOUtils.setDTOState(existingValueSet, DTOState.UPDATED);
+                    existingValueSet = updateMain(existingValueSet, Update.class, sessionDTO, new PropertyBagDTO());
                 }
 
                 // iterate over the codes and code systems to determine if they exist - if not - create them
@@ -583,6 +610,14 @@ public class ValueSetBO extends BaseBO<ValueSetDTO> {
                         }
                     }
                 }
+
+                logger.info(METHODNAME, "existingValueSet.getName()=", existingValueSet.getName());
+                logger.info(METHODNAME, "existingValueSet.getOid()=", existingValueSet.getOid());
+                logger.info(METHODNAME, "existingValueSet.getCode()=", existingValueSet.getCode());
+                logger.info(METHODNAME, "existingValueSet.getDescription()=", existingValueSet.getDescription());
+                logger.info(METHODNAME, "existingValueSet.getVersion()=", existingValueSet.getVersion());
+                logger.info(METHODNAME, "existingValueSet.getVersionStatus()=", existingValueSet.getVersionStatus());
+                logger.info(METHODNAME, "existingValueSet.getVersionDescription()=", existingValueSet.getVersionDescription());
 
                 // Save the new value set...
                 existingValueSet = updateMain(existingValueSet, Update.class, sessionDTO, propertyBagDTO);
