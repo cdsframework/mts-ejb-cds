@@ -62,6 +62,7 @@ import org.cdsframework.group.Delete;
 import org.cdsframework.group.SimpleExchange;
 import org.cdsframework.group.Update;
 import org.cdsframework.util.AuthenticationUtils;
+import org.cdsframework.util.DTOUtils;
 import org.cdsframework.util.FileUtils;
 import org.cdsframework.util.PhinVadsUtils;
 import org.cdsframework.util.StringUtils;
@@ -114,7 +115,7 @@ public class ValueSetBO extends BaseBO<ValueSetDTO> {
         List<CdsListDTO> cdsLists = cdsListBO.findByQueryListMain(
                 cdsListDTO,
                 CdsListDTO.ByValueSet.class,
-                new ArrayList<Class>(),
+                new ArrayList<>(),
                 AuthenticationUtils.getInternalSessionDTO(),
                 propertyBagDTO);
         for (CdsListDTO item : cdsLists) {
@@ -340,25 +341,7 @@ public class ValueSetBO extends BaseBO<ValueSetDTO> {
                     logger.info(METHODNAME, "fileName is null!");
                 }
             }
-        } catch (UnsupportedOperationException e) {
-            logger.error(e);
-            throw new MtsException(e.getMessage());
-        } catch (AuthenticationException e) {
-            logger.error(e);
-            throw new MtsException(e.getMessage());
-        } catch (AuthorizationException e) {
-            logger.error(e);
-            throw new MtsException(e.getMessage());
-        } catch (ConstraintViolationException e) {
-            logger.error(e);
-            throw new MtsException(e.getMessage());
-        } catch (MtsException e) {
-            logger.error(e);
-            throw new MtsException(e.getMessage());
-        } catch (NotFoundException e) {
-            logger.error(e);
-            throw new MtsException(e.getMessage());
-        } catch (ValidationException e) {
+        } catch (UnsupportedOperationException | AuthenticationException | AuthorizationException | ConstraintViolationException | MtsException | NotFoundException | ValidationException e) {
             logger.error(e);
             throw new MtsException(e.getMessage());
         }
@@ -428,7 +411,7 @@ public class ValueSetBO extends BaseBO<ValueSetDTO> {
             ValueSetDTO newValueSet = null;
             if (vsacData != null) {
                 logger.info(METHODNAME, "attempting to translate vsac data to new value set dto");
-                newValueSet = VsacUtils.getValueSetFromVsacData(vsacData);
+                newValueSet = VsacUtils.getValueSetFromVsacData(vsacData, profile, version);
                 if (newValueSet != null) {
                     logger.info(METHODNAME, "successfully translated vsac data to new value set dto");
                     logger.info(METHODNAME, "newValueSet=", newValueSet);
@@ -442,26 +425,48 @@ public class ValueSetBO extends BaseBO<ValueSetDTO> {
 
             // Save the new value set...
             if (newValueSet != null) {
+                logger.info(METHODNAME, "profile=", profile);
+                logger.info(METHODNAME, "version=", version);
+                logger.info(METHODNAME, "newValueSet.getName()=", newValueSet.getName());
+                logger.info(METHODNAME, "newValueSet.getOid()=", newValueSet.getOid());
+                logger.info(METHODNAME, "newValueSet.getCode()=", newValueSet.getCode());
+                logger.info(METHODNAME, "newValueSet.getDescription()=", newValueSet.getDescription());
+                logger.info(METHODNAME, "newValueSet.getVersion()=", newValueSet.getVersion());
+                logger.info(METHODNAME, "newValueSet.getVersionStatus()=", newValueSet.getVersionStatus());
+                logger.info(METHODNAME, "newValueSet.getVersionDescription()=", newValueSet.getVersionDescription());
 
-                ValueSetDTO existingValueSet;
 
-                //Determine if the value set already exists (by oid and version)...
-                existingValueSet = new ValueSetDTO();
-                existingValueSet.setOid(newValueSet.getOid());
-                existingValueSet.setVersion(newValueSet.getVersion());
-                try {
-                    existingValueSet = findByQueryMain(
-                            existingValueSet,
-                            ValueSetDTO.ByOidVersion.class,
-                            getDtoChildClasses(),
-                            sessionDTO,
-                            propertyBagDTO);
-                } catch (NotFoundException e) {
-                    existingValueSet = null;
-                }
+//                //Determine if the value set already exists (by oid and version)...
+//                existingValueSet = new ValueSetDTO();
+//                existingValueSet.setOid(newValueSet.getOid());
+//                existingValueSet.setVersion(newValueSet.getVersion());
+//                existingValueSet.setCode(newValueSet.getCode());
+//                existingValueSet.setVersionStatus(newValueSet.getVersionStatus());
+//                try {
+//                    existingValueSet = findByQueryMain(
+//                            existingValueSet,
+//                            ValueSetDTO.ByCodeOidVersionVersionStatus.class,
+//                            getDtoChildClasses(),
+//                            sessionDTO,
+//                            propertyBagDTO);
+//                } catch (NotFoundException e) {
+//                    existingValueSet = null;
+//                }
+                ValueSetDTO queryDTO = new ValueSetDTO();
+                queryDTO.setOid(newValueSet.getOid());
+                List<ValueSetDTO> results = findByQueryListMain(
+                        queryDTO,
+                        ValueSetDTO.ByOid.class,
+                        new ArrayList<>(),
+                        sessionDTO,
+                        new PropertyBagDTO());
 
+                ValueSetDTO existingValueSet = VsacUtils.getExistingValueSetFromList(results, newValueSet.getVersion(), newValueSet.getVersionStatus());
+
+                // scenario #4
                 // If it does not exist, create it...
                 if (existingValueSet == null) {
+                    logger.info(METHODNAME, "no matching dto found - creating new one. scenario #4");
                     existingValueSet = new ValueSetDTO();
                     existingValueSet.setName(newValueSet.getName());
                     existingValueSet.setOid(newValueSet.getOid());
@@ -471,7 +476,18 @@ public class ValueSetBO extends BaseBO<ValueSetDTO> {
                     existingValueSet.setVersionDescription(newValueSet.getVersionDescription());
                     existingValueSet.setVersionStatus(newValueSet.getVersionStatus());
                     logger.info(METHODNAME, "createing new value set ", existingValueSet.getName(), " - ", existingValueSet.getCode(), " - ", existingValueSet.getOid());
-                    existingValueSet = addMain(existingValueSet, Add.class, sessionDTO, propertyBagDTO);
+                    existingValueSet = addMain(existingValueSet, Add.class, sessionDTO, new PropertyBagDTO());
+                } else {
+                    existingValueSet = findByPrimaryKeyMain(existingValueSet, getDtoChildClasses(), sessionDTO, propertyBagDTO);
+                    logger.info(METHODNAME, "matching dto found - updating...");
+                    existingValueSet.setName(newValueSet.getName());
+                    existingValueSet.setCode(newValueSet.getCode());
+                    existingValueSet.setVersion(newValueSet.getVersion());
+                    existingValueSet.setDescription(newValueSet.getDescription());
+                    existingValueSet.setVersionStatus(newValueSet.getVersionStatus());
+                    existingValueSet.setVersionDescription(newValueSet.getVersionDescription());
+                    DTOUtils.setDTOState(existingValueSet, DTOState.UPDATED);
+                    existingValueSet = updateMain(existingValueSet, Update.class, sessionDTO, new PropertyBagDTO());
                 }
 
                 // iterate over the codes and code systems to determine if they exist - if not - create them
@@ -486,7 +502,7 @@ public class ValueSetBO extends BaseBO<ValueSetDTO> {
                         codeSystemDTO = cdsCodeSystemBO.findByQueryMain(
                                 codeSystemDTO,
                                 CdsCodeSystemDTO.ByOid.class,
-                                new ArrayList<Class>(),
+                                new ArrayList<>(),
                                 sessionDTO,
                                 propertyBagDTO);
                     } catch (NotFoundException e) {
@@ -502,7 +518,7 @@ public class ValueSetBO extends BaseBO<ValueSetDTO> {
                     // next, check the code
                     CdsCodeDTO foundCdsCodeDTO = null;
                     try {
-                        foundCdsCodeDTO = cdsCodeBO.findByQueryMain(item, CdsCodeDTO.ByCodeSystemCode.class, new ArrayList<Class>(), sessionDTO, propertyBagDTO);
+                        foundCdsCodeDTO = cdsCodeBO.findByQueryMain(item, CdsCodeDTO.ByCodeSystemCode.class, new ArrayList<>(), sessionDTO, propertyBagDTO);
                     } catch (NotFoundException e) {
                         // no hacer nada
                     }
@@ -595,30 +611,22 @@ public class ValueSetBO extends BaseBO<ValueSetDTO> {
                     }
                 }
 
+                logger.info(METHODNAME, "existingValueSet.getName()=", existingValueSet.getName());
+                logger.info(METHODNAME, "existingValueSet.getOid()=", existingValueSet.getOid());
+                logger.info(METHODNAME, "existingValueSet.getCode()=", existingValueSet.getCode());
+                logger.info(METHODNAME, "existingValueSet.getDescription()=", existingValueSet.getDescription());
+                logger.info(METHODNAME, "existingValueSet.getVersion()=", existingValueSet.getVersion());
+                logger.info(METHODNAME, "existingValueSet.getVersionStatus()=", existingValueSet.getVersionStatus());
+                logger.info(METHODNAME, "existingValueSet.getVersionDescription()=", existingValueSet.getVersionDescription());
+
                 // Save the new value set...
                 existingValueSet = updateMain(existingValueSet, Update.class, sessionDTO, propertyBagDTO);
                 logger.info(METHODNAME, "finished processing existing: ", existingValueSet.getName(), " - ", existingValueSet.getCode(), " - ", existingValueSet.getOid());
+            } else {
+                throw new MtsException("No value set data was received or could be parsed from VSAC service response.");
             }
 
-        } catch (UnsupportedOperationException e) {
-            logger.error(e);
-            throw new MtsException(e.getMessage());
-        } catch (AuthenticationException e) {
-            logger.error(e);
-            throw new MtsException(e.getMessage());
-        } catch (AuthorizationException e) {
-            logger.error(e);
-            throw new MtsException(e.getMessage());
-        } catch (ConstraintViolationException e) {
-            logger.error(e);
-            throw new MtsException(e.getMessage());
-        } catch (MtsException e) {
-            logger.error(e);
-            throw new MtsException(e.getMessage());
-        } catch (NotFoundException e) {
-            logger.error(e);
-            throw new MtsException(e.getMessage());
-        } catch (ValidationException e) {
+        } catch (UnsupportedOperationException | AuthenticationException | AuthorizationException | ConstraintViolationException | MtsException | NotFoundException | ValidationException e) {
             logger.error(e);
             throw new MtsException(e.getMessage());
         }
