@@ -59,7 +59,7 @@
             <env-entry>
                 <env-entry-name>DB_RESOURCES</env-entry-name>
                 <env-entry-type>java.lang.String</env-entry-type>
-                <env-entry-value>CDS|jdbc/cds</env-entry-value>
+                <env-entry-value>CDS|jdbc/cds,CDS_MTS|jdbc/mts</env-entry-value>
             </env-entry>
         </session>
     </enterprise-beans>
