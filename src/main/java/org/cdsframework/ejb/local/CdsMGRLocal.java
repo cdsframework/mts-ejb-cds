@@ -58,10 +58,8 @@ import org.cdsframework.dto.SessionDTO;
 import org.cdsframework.dto.ValueSetCdsCodeRelDTO;
 import org.cdsframework.dto.ValueSetDTO;
 import org.cdsframework.dto.ValueSetSubValueSetRelDTO;
-import org.cdsframework.ejb.bo.CdsCodeSystemBO;
 import org.cdsframework.ejb.bo.OpenCdsConceptBO;
 import org.cdsframework.ejb.bo.OpenCdsConceptDeploymentLogBO;
-import org.cdsframework.ejb.bo.ValueSetBO;
 import org.cdsframework.enumeration.DeploymentAction;
 import org.cdsframework.enumeration.DeploymentEnvironment;
 import org.cdsframework.exceptions.AuthenticationException;
@@ -73,6 +71,7 @@ import org.cdsframework.exceptions.NotFoundException;
 import org.cdsframework.exceptions.ValidationException;
 import org.cdsframework.group.Add;
 import org.cdsframework.util.AuthenticationUtils;
+import org.cdsframework.util.EjbCdsConfiguration;
 import org.cdsframework.util.LogUtils;
 import org.opencds.config.schema.Concept;
 import org.opencds.config.schema.ConceptDeterminationMethod;
@@ -100,10 +99,6 @@ public class CdsMGRLocal {
     @EJB
     private OpenCdsConceptBO openCdsConceptBO;
     @EJB
-    private ValueSetBO valueSetBO;
-    @EJB
-    private CdsCodeSystemBO cdsCodeSystemBO;
-    @EJB
     private OpenCdsConceptDeploymentLogBO openCdsConceptDeploymentLogBO;
 
     /**
@@ -115,7 +110,7 @@ public class CdsMGRLocal {
         long start = System.nanoTime();
         final String METHODNAME = "getOpenCdsService ";
         int requestTimeout = (Integer) propertyMGRLocal.get("CDS_TIMEOUT");
-        String endPoint = (String) propertyMGRLocal.get("CDS_ENDPOINT");
+        String endPoint = EjbCdsConfiguration.getCdsEndPoint();
         OpenCdsService openCdsService = OpenCdsService.getOpenCdsService(endPoint, requestTimeout, requestTimeout);
         logger.logDuration(METHODNAME, start);
         return openCdsService;
