@@ -14,10 +14,13 @@
 --    limitations under the License.
 --
 
--- // remove_cds_endpoint_prop
+-- // remove_opencds_prop
 -- Migration SQL that makes the change goes here.
 
-delete from system_property where name = 'CDS_ENDPOINT';
+delete from system_property where name = 'OPENCDS_REST_HOST';
+delete from system_property where name = 'OPENCDS_REST_PASSWORD';
+delete from system_property where name = 'OPENCDS_REST_PORT';
+delete from system_property where name = 'OPENCDS_REST_USERNAME';
 
 -- //@UNDO
 -- SQL to undo the change goes here.
