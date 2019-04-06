@@ -7,23 +7,27 @@
  * This program is free software: you can redistribute it and/or modify it under the terms of the GNU
  * Lesser General Public License as published by the Free Software Foundation, either version 3 of the
  * License, or (at your option) any later version. You should have received a copy of the GNU Lesser
- * General Public License along with this program. If not, see <http://www.gnu.org/licenses/> for more
- * details.
+ * General Public License along with this program. If not, see
+ * <http://www.gnu.org/licenses/> for more details.
  *
- * The above-named contributors (HLN Consulting, LLC) are also licensed by the New York City
- * Department of Health and Mental Hygiene, Bureau of Immunization to have (without restriction,
- * limitation, and warranty) complete irrevocable access and rights to this project.
+ * The above-named contributors (HLN Consulting, LLC) are also licensed by the
+ * New York City Department of Health and Mental Hygiene, Bureau of Immunization
+ * to have (without restriction, limitation, and warranty) complete irrevocable
+ * access and rights to this project.
  *
- * This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; THE
+ * This program is distributed in the hope that it will be useful, but WITHOUT
+ * ANY WARRANTY; THE
  *
- * SOFTWARE IS PROVIDED "AS IS" WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING,
- * BUT NOT LIMITED TO, WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND
- * NONINFRINGEMENT. IN NO EVENT SHALL THE COPYRIGHT HOLDERS, IF ANY, OR DEVELOPERS BE LIABLE FOR
- * ANY CLAIM, DAMAGES, OR OTHER LIABILITY OF ANY KIND, ARISING FROM, OUT OF, OR IN CONNECTION WITH
- * THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+ * SOFTWARE IS PROVIDED "AS IS" WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ * IMPLIED, INCLUDING, BUT NOT LIMITED TO, WARRANTIES OF MERCHANTABILITY,
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+ * COPYRIGHT HOLDERS, IF ANY, OR DEVELOPERS BE LIABLE FOR ANY CLAIM, DAMAGES, OR
+ * OTHER LIABILITY OF ANY KIND, ARISING FROM, OUT OF, OR IN CONNECTION WITH THE
+ * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  *
- * For more information about this software, see https://www.hln.com/services/open-source/ or send
- * correspondence to ice@hln.com.
+ * For more information about this software, see
+ * https://www.hln.com/services/open-source/ or send correspondence to
+ * ice@hln.com.
  */
 package org.cdsframework.ejb.dao;
 
@@ -95,6 +99,36 @@ public class OpenCdsConceptDAO extends BaseDAO<OpenCdsConceptDTO> {
             @Override
             protected void getCallbackNamedParameters(MapSqlParameterSource namedParameters, BaseDTO baseDTO, SessionDTO sessionDTO, PropertyBagDTO propertyBagDTO) throws MtsException {
                 setLowerQueryMapValue(baseDTO, "vaccine_id", "vaccineId", namedParameters);
+            }
+
+        }, false);
+
+        registerDML(OpenCdsConceptDTO.ByConditionId.class, new QueryCallback(getDtoTableName()) {
+
+            @Override
+            protected String getQueryDML(BaseDTO baseDTO, SessionDTO sessionDTO, PropertyBagDTO propertyBagDTO) {
+                String conditionId = (String) baseDTO.getQueryMap().get("conditionId");
+                logger.info("getQueryDML ByOpenCdsVaccineGroupMapping conditionId=", conditionId);
+                logger.info("getQueryDML ByOpenCdsVaccineGroupMapping baseDTO.getQueryMap()=", baseDTO.getQueryMap());
+                String sql = "select distinct conc.* from value_set vset "
+                        + " join value_set_cds_code_rel vcrl on vcrl.value_set_id = vset.value_set_id "
+                        + " join cds_code code on code.code_id = vcrl.code_id "
+                        + " join cds_code_system csys on csys.code_system_id = code.code_system_id "
+                        + " join opencds_concept_rel crel on (crel.value_set_id = vset.value_set_id) "
+                        + " join opencds_concept conc on conc.code_id = crel.concept_code_id "
+                        + " left join criteria_predicate_part_rel cppr on (cppr.value_set_id = vset.value_set_id or cppr.code_id = vcrl.code_id or cppr.concept_id = conc.code_id) "
+                        + " join condition_crit_pred_part_concept ccppc on (ccppc.code_id = crel.cds_code_id or ccppc.concept_id = conc.code_id or ccppc.code_id = vcrl.code_id) "
+                        + " join condition_crit_pred_part ccpp on ccpp.part_id = ccppc.part_id "
+                        + " join condition_crit_predicate ccp on (ccp.predicate_id = ccpp.predicate_id) "
+                        + " join condition_criteria_rel ccr on ccr.rel_id = ccp.rel_id "
+                        + " join rckms_condition cond on cond.condition_id = ccr.condition_id where cond.condition_id = :condition_id";
+                logger.info("getQueryDML ByOpenCdsVaccineGroupMapping sql=", sql);
+                return sql;
+            }
+
+            @Override
+            protected void getCallbackNamedParameters(MapSqlParameterSource namedParameters, BaseDTO baseDTO, SessionDTO sessionDTO, PropertyBagDTO propertyBagDTO) throws MtsException {
+                setLowerQueryMapValue(baseDTO, "condition_id", "conditionId", namedParameters);
             }
 
         }, false);
