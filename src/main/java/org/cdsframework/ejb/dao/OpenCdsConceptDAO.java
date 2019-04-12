@@ -110,18 +110,18 @@ public class OpenCdsConceptDAO extends BaseDAO<OpenCdsConceptDTO> {
                 String conditionId = (String) baseDTO.getQueryMap().get("conditionId");
                 logger.info("getQueryDML ByOpenCdsVaccineGroupMapping conditionId=", conditionId);
                 logger.info("getQueryDML ByOpenCdsVaccineGroupMapping baseDTO.getQueryMap()=", baseDTO.getQueryMap());
-                String sql = "select distinct conc.* from value_set vset "
+                String sql = "select * from (select distinct conc.* from value_set vset "
                         + " join value_set_cds_code_rel vcrl on vcrl.value_set_id = vset.value_set_id "
                         + " join cds_code code on code.code_id = vcrl.code_id "
                         + " join cds_code_system csys on csys.code_system_id = code.code_system_id "
                         + " join opencds_concept_rel crel on (crel.value_set_id = vset.value_set_id) "
-                        + " join opencds_concept conc on conc.code_id = crel.concept_code_id "
+                        + " join vw_opencds_concept conc on conc.code_id = crel.concept_code_id "
                         + " left join criteria_predicate_part_rel cppr on (cppr.value_set_id = vset.value_set_id or cppr.code_id = vcrl.code_id or cppr.concept_id = conc.code_id) "
                         + " join condition_crit_pred_part_concept ccppc on (ccppc.code_id = crel.cds_code_id or ccppc.concept_id = conc.code_id or ccppc.code_id = vcrl.code_id) "
                         + " join condition_crit_pred_part ccpp on ccpp.part_id = ccppc.part_id "
                         + " join condition_crit_predicate ccp on (ccp.predicate_id = ccpp.predicate_id) "
                         + " join condition_criteria_rel ccr on ccr.rel_id = ccp.rel_id "
-                        + " join rckms_condition cond on cond.condition_id = ccr.condition_id where cond.condition_id = :condition_id";
+                        + " join rckms_condition cond on cond.condition_id = ccr.condition_id where cond.condition_id = :condition_id) concept";
                 logger.info("getQueryDML ByOpenCdsVaccineGroupMapping sql=", sql);
                 return sql;
             }
