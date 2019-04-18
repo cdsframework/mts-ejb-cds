@@ -120,7 +120,7 @@ public class OpenCdsConceptDAO extends BaseDAO<OpenCdsConceptDTO> {
                         + " join condition_crit_pred_part_concept ccppc on (ccppc.code_id = crel.cds_code_id or ccppc.concept_id = conc.code_id or ccppc.code_id = vcrl.code_id) "
                         + " join condition_crit_pred_part ccpp on ccpp.part_id = ccppc.part_id "
                         + " join condition_crit_predicate ccp on (ccp.predicate_id = ccpp.predicate_id) "
-                        + " join condition_criteria_rel ccr on ccr.rel_id = ccp.rel_id "
+                        + " join condition_criteria_rel ccr on ccr.rel_id = ccp.rel_id and ccr.ignore_criteria = false "
                         + " join rckms_condition cond on cond.condition_id = ccr.condition_id where cond.condition_id = :condition_id) concept";
                 logger.info("getQueryDML ByOpenCdsVaccineGroupMapping sql=", sql);
                 return sql;
