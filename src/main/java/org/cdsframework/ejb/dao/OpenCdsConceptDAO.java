@@ -110,7 +110,15 @@ public class OpenCdsConceptDAO extends BaseDAO<OpenCdsConceptDTO> {
                 String conditionId = (String) baseDTO.getQueryMap().get("conditionId");
                 logger.info("getQueryDML ByOpenCdsVaccineGroupMapping conditionId=", conditionId);
                 logger.info("getQueryDML ByOpenCdsVaccineGroupMapping baseDTO.getQueryMap()=", baseDTO.getQueryMap());
-                String sql = "select * from (select distinct conc.* from value_set vset "
+                String sql = "WITH RECURSIVE condition_crit_predicates as ("
+                        + " select p.rel_id as root_rel_id, p.* "
+                        + " from condition_crit_predicate p where p.parent_predicate_id is null "
+                        + " union all "
+                        + " select c.root_rel_id, a.* "
+                        + " from condition_crit_predicate a, condition_crit_predicates c "
+                        + " where a.parent_predicate_id = c.predicate_id "
+                        + ") select * from ("
+                        + " select distinct conc.* from value_set vset "
                         + " join value_set_cds_code_rel vcrl on vcrl.value_set_id = vset.value_set_id "
                         + " join cds_code code on code.code_id = vcrl.code_id "
                         + " join cds_code_system csys on csys.code_system_id = code.code_system_id "
@@ -119,9 +127,9 @@ public class OpenCdsConceptDAO extends BaseDAO<OpenCdsConceptDTO> {
                         + " left join criteria_predicate_part_rel cppr on (cppr.value_set_id = vset.value_set_id or cppr.code_id = vcrl.code_id or cppr.concept_id = conc.code_id) "
                         + " join condition_crit_pred_part_concept ccppc on (ccppc.code_id = crel.cds_code_id or ccppc.concept_id = conc.code_id or ccppc.code_id = vcrl.code_id) "
                         + " join condition_crit_pred_part ccpp on ccpp.part_id = ccppc.part_id "
-                        + " join condition_crit_predicate ccp on (ccp.predicate_id = ccpp.predicate_id) "
-                        + " join condition_criteria_rel ccr on ccr.rel_id = ccp.rel_id "
-                        + " join rckms_condition cond on cond.condition_id = ccr.condition_id where cond.condition_id = :condition_id) concept";
+                        + " join condition_crit_predicates ccp on (ccp.predicate_id = ccpp.predicate_id) "
+                        + " join condition_criteria_rel ccr on ccr.rel_id = ccp.root_rel_id and ccr.ignore_criteria = false "
+                        + " where ccr.condition_id = :condition_id) concept";
                 logger.info("getQueryDML ByOpenCdsVaccineGroupMapping sql=", sql);
                 return sql;
             }
