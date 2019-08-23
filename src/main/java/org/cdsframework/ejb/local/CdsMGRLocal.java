@@ -86,6 +86,9 @@ import org.opencds.vmr.v1_0.schema.SubstanceAdministrationEvent;
 /**
  *
  * @author HLN Consulting, LLC
+ * 
+ * TODO: move most of this to the REST services
+ * 
  */
 @Stateless
 @LocalBean
