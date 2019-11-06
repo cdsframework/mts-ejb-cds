@@ -34,7 +34,6 @@ import java.util.Map;
 import org.cdsframework.cds.util.CdsObjectFactory;
 import org.cdsframework.cds.vmr.CdsInputWrapper;
 import org.cdsframework.dto.CdsCodeDTO;
-import org.cdsframework.dto.CriteriaDataTemplateRelDTO;
 import org.cdsframework.dto.OpenCdsConceptDTO;
 import org.cdsframework.enumeration.DetectedModelElementType;
 import org.cdsframework.exceptions.AuthenticationException;
@@ -445,12 +444,13 @@ public class CdsInputMapper {
     public static void processMap(
             CdsInputWrapper cdsInputWrapper,
             String statementId,
-            Map<CriteriaDataTemplateRelDTO, Map<DetectedModelElementType, List<Object>>> clinicalStatementMap) throws MtsException, ValidationException, NotFoundException, AuthenticationException, AuthorizationException {
+            Map<String, Map<DetectedModelElementType, List<Object>>> clinicalStatementMap)
+            throws MtsException, ValidationException, NotFoundException, AuthenticationException, AuthorizationException {
         final String METHODNAME = "processMap ";
         logger.info(METHODNAME, "clinicalStatementMap=", clinicalStatementMap);
-        for (CriteriaDataTemplateRelDTO criteriaDataTemplateRelDTO : clinicalStatementMap.keySet()) {
-            logger.info(METHODNAME, "processing: ", criteriaDataTemplateRelDTO.getLabel());
-            setClinicalStatement(cdsInputWrapper, statementId, clinicalStatementMap.get(criteriaDataTemplateRelDTO));
+        for (String label : clinicalStatementMap.keySet()) {
+            logger.info(METHODNAME, "processing: ", label);
+            setClinicalStatement(cdsInputWrapper, statementId, clinicalStatementMap.get(label));
         }
     }
 
