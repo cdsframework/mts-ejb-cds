@@ -25,16 +25,23 @@
  * For more information about this software, see https://www.hln.com/services/open-source/ or send
  * correspondence to ice@hln.com.
  */
-package org.cdsframework.ejb.dao;
+package org.cdsframework.ejb.bo;
 
 import javax.ejb.Stateless;
-import org.cdsframework.base.BaseDAO;
-import org.cdsframework.dto.DataTemplateNodeRelDTO;
+import org.cdsframework.base.BaseBO;
+import org.cdsframework.dto.DataInputNodeDTO;
+import org.cdsframework.exceptions.MtsException;
 
 /**
  *
  * @author HLN Consulting, LLC
  */
 @Stateless
-public class DataTemplateNodeRelDAO extends BaseDAO<DataTemplateNodeRelDTO> {
+public class DataInputNodeBO extends BaseBO<DataInputNodeDTO> {
+
+    @Override
+    protected void initialize() throws MtsException {
+        setSelfReferencing(true);
+    }
+
 }
