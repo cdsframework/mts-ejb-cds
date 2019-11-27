@@ -29,7 +29,7 @@ package org.cdsframework.ejb.bo;
 
 import javax.ejb.Stateless;
 import org.cdsframework.base.BaseBO;
-import org.cdsframework.dto.CriteriaDataTemplateRelNodeDTO;
+import org.cdsframework.dto.DataInputNodeDTO;
 import org.cdsframework.exceptions.MtsException;
 
 /**
@@ -37,12 +37,11 @@ import org.cdsframework.exceptions.MtsException;
  * @author HLN Consulting, LLC
  */
 @Stateless
-public class CriteriaDataTemplateRelNodeBO extends BaseBO<CriteriaDataTemplateRelNodeDTO> {
+public class DataInputNodeBO extends BaseBO<DataInputNodeDTO> {
 
     @Override
     protected void initialize() throws MtsException {
         setSelfReferencing(true);
     }
 
-    
 }
