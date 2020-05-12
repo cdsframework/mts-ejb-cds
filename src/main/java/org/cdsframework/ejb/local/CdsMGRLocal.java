@@ -7,23 +7,25 @@
  * This program is free software: you can redistribute it and/or modify it under the terms of the GNU
  * Lesser General Public License as published by the Free Software Foundation, either version 3 of the
  * License, or (at your option) any later version. You should have received a copy of the GNU Lesser
- * General Public License along with this program. If not, see <http://www.gnu.org/licenses/> for more
- * details.
+ * General Public License along with this program. If not, see <http://www.gnu.org/licenses/>
+ * for more details.
  *
  * The above-named contributors (HLN Consulting, LLC) are also licensed by the New York City
- * Department of Health and Mental Hygiene, Bureau of Immunization to have (without restriction,
- * limitation, and warranty) complete irrevocable access and rights to this project.
+ * Department of Health and Mental Hygiene, Bureau of Immunization to have (without
+ * restriction, limitation, and warranty) complete irrevocable access and rights to this
+ * project.
  *
- * This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; THE
+ * This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY;
+ * THE
  *
  * SOFTWARE IS PROVIDED "AS IS" WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING,
  * BUT NOT LIMITED TO, WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND
- * NONINFRINGEMENT. IN NO EVENT SHALL THE COPYRIGHT HOLDERS, IF ANY, OR DEVELOPERS BE LIABLE FOR
- * ANY CLAIM, DAMAGES, OR OTHER LIABILITY OF ANY KIND, ARISING FROM, OUT OF, OR IN CONNECTION WITH
- * THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+ * NONINFRINGEMENT. IN NO EVENT SHALL THE COPYRIGHT HOLDERS, IF ANY, OR DEVELOPERS BE LIABLE
+ * FOR ANY CLAIM, DAMAGES, OR OTHER LIABILITY OF ANY KIND, ARISING FROM, OUT OF, OR IN
+ * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  *
- * For more information about this software, see https://www.hln.com/services/open-source/ or send
- * correspondence to ice@hln.com.
+ * For more information about this software, see https://www.hln.com/services/open-source/ or
+ * send correspondence to ice@hln.com.
  */
 package org.cdsframework.ejb.local;
 
@@ -86,9 +88,9 @@ import org.opencds.vmr.v1_0.schema.SubstanceAdministrationEvent;
 /**
  *
  * @author HLN Consulting, LLC
- * 
+ *
  * TODO: move most of this to the REST services
- * 
+ *
  */
 @Stateless
 @LocalBean
@@ -250,14 +252,12 @@ public class CdsMGRLocal {
             ConceptDeterminationMethodDTO conceptDeterminationMethodDTO,
             String codeSystem,
             DeploymentEnvironment environment,
-            boolean audit,
             SessionDTO sessionDTO,
             PropertyBagDTO propertyBagDTO)
             throws MtsException, ValidationException, NotFoundException, AuthenticationException, AuthorizationException, ConstraintViolationException {
         final String METHODNAME = "getConceptDeterminationMethod ";
         logger.info(METHODNAME, "codeSystem=", codeSystem);
         logger.info(METHODNAME, "environment=", environment);
-        logger.info(METHODNAME, "audit=", audit);
         ObjectFactory objectFactory = new ObjectFactory();
         ConceptDeterminationMethod result = objectFactory.createConceptDeterminationMethod();
 
@@ -276,7 +276,7 @@ public class CdsMGRLocal {
         result.setUserId("GENERATED");
         result.setVersion("1.0");
 
-        addConceptMappings(conceptDeterminationMethodDTO, result, codeSystem, environment, audit, objectFactory, sessionDTO, propertyBagDTO);
+        addConceptMappings(conceptDeterminationMethodDTO, result, codeSystem, environment, objectFactory, sessionDTO, propertyBagDTO);
 
         return result;
     }
@@ -286,7 +286,6 @@ public class CdsMGRLocal {
             ConceptDeterminationMethod conceptDeterminationMethod,
             String codeSystem,
             DeploymentEnvironment environment,
-            boolean audit,
             ObjectFactory objectFactory,
             SessionDTO sessionDTO,
             PropertyBagDTO propertyBagDTO)
@@ -306,13 +305,11 @@ public class CdsMGRLocal {
         List<OpenCdsConceptDTO> openCdsConceptDTOs = openCdsConceptBO.findByQueryListMain(openCdsConceptQueryDTO, OpenCdsConceptDTO.ByConceptDeterminationMethod.class, childClasses, sessionDTO, propertyBagDTO);
 
         for (OpenCdsConceptDTO openCdsConceptDTO : openCdsConceptDTOs) {
-            if (audit) {
-                OpenCdsConceptDeploymentLogDTO logDTO = new OpenCdsConceptDeploymentLogDTO();
-                logDTO.setCodeId(openCdsConceptDTO.getCodeId());
-                logDTO.setDeploymentAction(DeploymentAction.DEPLOYED);
-                logDTO.setDeploymentEnvironment(environment);
-                openCdsConceptDeploymentLogBO.addMain(logDTO, Add.class, AuthenticationUtils.getInternalSessionDTO(), propertyBagDTO);
-            }
+            OpenCdsConceptDeploymentLogDTO logDTO = new OpenCdsConceptDeploymentLogDTO();
+            logDTO.setCodeId(openCdsConceptDTO.getCodeId());
+            logDTO.setDeploymentAction(DeploymentAction.DEPLOYED);
+            logDTO.setDeploymentEnvironment(environment);
+            openCdsConceptDeploymentLogBO.addMain(logDTO, Add.class, AuthenticationUtils.getInternalSessionDTO(), propertyBagDTO);
             addedMappedCodeSystemCodes = new HashMap<>();
             boolean testPresent = false;
             List<OpenCdsConceptRelDTO> openCdsConceptRelDTOs = openCdsConceptDTO.getOpenCdsConceptRelDTOs();
@@ -338,14 +335,12 @@ public class CdsMGRLocal {
                     continue;
                 }
                 if (null != openCdsConceptRelDTO.getMappingType()) {
-                    if (audit) {
-                        OpenCdsConceptDeploymentLogDTO logRelDTO = new OpenCdsConceptDeploymentLogDTO();
-                        logRelDTO.setCodeId(openCdsConceptDTO.getCodeId());
-                        logRelDTO.setRelationshipId(openCdsConceptRelDTO.getRelationshipId());
-                        logRelDTO.setDeploymentAction(DeploymentAction.DEPLOYED);
-                        logRelDTO.setDeploymentEnvironment(environment);
-                        openCdsConceptDeploymentLogBO.addMain(logRelDTO, Add.class, AuthenticationUtils.getInternalSessionDTO(), propertyBagDTO);
-                    }
+                    OpenCdsConceptDeploymentLogDTO logRelDTO = new OpenCdsConceptDeploymentLogDTO();
+                    logRelDTO.setCodeId(openCdsConceptDTO.getCodeId());
+                    logRelDTO.setRelationshipId(openCdsConceptRelDTO.getRelationshipId());
+                    logRelDTO.setDeploymentAction(DeploymentAction.DEPLOYED);
+                    logRelDTO.setDeploymentEnvironment(environment);
+                    openCdsConceptDeploymentLogBO.addMain(logRelDTO, Add.class, AuthenticationUtils.getInternalSessionDTO(), propertyBagDTO);
                     switch (openCdsConceptRelDTO.getMappingType()) {
                         case CODE:
                             // send it up as is
