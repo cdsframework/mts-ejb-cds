@@ -366,8 +366,7 @@ public class ValueSetBO extends BaseBO<ValueSetDTO> {
 
         // Extract the parameters from the property bag...
         String baseUri = propertyMGRLocal.get("VSAC_BASE_URI", String.class);
-        String username = propertyMGRLocal.get("VSAC_USERNAME", String.class);
-        String password = propertyMGRLocal.get("VSAC_PASSWORD", String.class);
+        String apiKey = propertyMGRLocal.get("VSAC_APIKEY", String.class);
 
         String oid = propertyBagDTO.get("oid", String.class);
         String profile = propertyBagDTO.get("profile", String.class);
@@ -390,9 +389,9 @@ public class ValueSetBO extends BaseBO<ValueSetDTO> {
             // Get value set data from the vsac service.
             RetrieveMultipleValueSetsResponse vsacData = null;
             if (profile != null) {
-                vsacData = VsacUtils.getValueSetByOidAndProfile(baseUri, username, password, oid, profile, includeDraft);
+                vsacData = VsacUtils.getValueSetByOidAndProfile(baseUri, apiKey, oid, profile, includeDraft);
             } else if (version != null) {
-                vsacData = VsacUtils.getValueSetByOidAndVersion(baseUri, username, password, oid, version);
+                vsacData = VsacUtils.getValueSetByOidAndVersion(baseUri, apiKey, oid, version);
             } else {
                 throw new ValidationException(CoreErrorCode.ParameterCanNotBeNull,
                         logger.error(METHODNAME, "no profile or version was was supplied."));
